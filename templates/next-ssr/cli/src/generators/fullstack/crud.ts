@@ -1,6 +1,6 @@
-import { generateBackendCrud } from "../backend/crud.js";
-import { generateFrontendCrud } from "../frontend/crud.js";
-import type { GeneratorLayoutOptions } from "../shared.js";
+import { generateBackendCrud } from "../backend/crud.ts";
+import { generateFrontendCrud } from "../frontend/crud.ts";
+import type { GeneratorLayoutOptions } from "../shared.ts";
 
 export async function generateFullstackCrud(
   name: string,

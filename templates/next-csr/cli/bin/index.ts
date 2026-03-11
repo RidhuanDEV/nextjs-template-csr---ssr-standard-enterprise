@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
 import { Command } from 'commander';
-import { registerGenerateCommand } from '../src/commands/generate.js';
-import { registerAuditCommand } from '../src/commands/audit.js';
+import { registerGenerateCommand } from '../src/commands/generate.ts';
+import { registerAuditCommand } from '../src/commands/audit.ts';
 
 const program = new Command();
 

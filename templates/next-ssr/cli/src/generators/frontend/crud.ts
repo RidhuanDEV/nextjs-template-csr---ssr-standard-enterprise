@@ -1,8 +1,8 @@
 import path from "node:path";
-import { resolveProjectRoot, writeFileSafe, ensureDir } from "../../utils/paths.js";
-import { createVariables, renderTemplate } from "../../utils/template.js";
-import { generateFrontendModule } from "./module.js";
-import type { GeneratorLayoutOptions } from "../shared.js";
+import { resolveProjectRoot, writeFileSafe, ensureDir } from "../../utils/paths.ts";
+import { createVariables, renderTemplate } from "../../utils/template.ts";
+import { generateFrontendModule } from "./module.ts";
+import type { GeneratorLayoutOptions } from "../shared.ts";
 
 const LIST_PAGE_TEMPLATE = `import Link from 'next/link';
 import { requireSession } from '@/server/auth/session';

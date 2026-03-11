@@ -1,7 +1,7 @@
 import path from 'node:path';
 import fs from 'fs-extra';
-import { resolveConstantsDir, ensureDir } from '../utils/paths.js';
-import type { TemplateVariables } from '../utils/template.js';
+import { resolveConstantsDir, ensureDir } from '../utils/paths.ts';
+import type { TemplateVariables } from '../utils/template.ts';
 
 export async function updateModulesConstants(vars: TemplateVariables): Promise<void> {
   const constantsDir = resolveConstantsDir();

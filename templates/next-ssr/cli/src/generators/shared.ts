@@ -1,6 +1,6 @@
 import path from "node:path";
-import { resolveModulesDir } from "../utils/paths.js";
-import type { TemplateVariables } from "../utils/template.js";
+import { resolveModulesDir } from "../utils/paths.ts";
+import type { TemplateVariables } from "../utils/template.ts";
 
 export interface GeneratorLayoutOptions {
   merge?: boolean;

@@ -1,15 +1,18 @@
 import type { Command } from "commander";
 import inquirer from "inquirer";
-import { generateFrontendModule } from "../generators/frontend/module.js";
-import { generateFrontendComponent } from "../generators/frontend/component.js";
-import { generateFrontendCrud } from "../generators/frontend/crud.js";
-import { generateBackendModule } from "../generators/backend/module.js";
-import { generateBackendCrud } from "../generators/backend/crud.js";
-import { generateFullstackCrud } from "../generators/fullstack/crud.js";
-import { normalizeEntityName } from "../utils/template.js";
+import { generateFrontendModule } from "../generators/frontend/module.ts";
+import { generateFrontendComponent } from "../generators/frontend/component.ts";
+import { generateFrontendCrud } from "../generators/frontend/crud.ts";
+import { generateBackendModule } from "../generators/backend/module.ts";
+import { generateBackendCrud } from "../generators/backend/crud.ts";
+import { generateFullstackCrud } from "../generators/fullstack/crud.ts";
+import { normalizeEntityName } from "../utils/template.ts";
 
 type FrontendType = "module" | "component" | "crud";
 type BackendType = "module" | "crud";
+
+const FRONTEND_TYPES: FrontendType[] = ["module", "component", "crud"];
+const BACKEND_TYPES: BackendType[] = ["module", "crud"];
 
 interface GenerateOptions {
   dir?: string;
@@ -19,6 +22,14 @@ interface GenerateOptions {
 export interface ComponentGenerationRequest {
   componentName: string;
   moduleName: string;
+}
+
+function isFrontendType(value: string): value is FrontendType {
+  return FRONTEND_TYPES.some((candidate) => candidate === value);
+}
+
+function isBackendType(value: string): value is BackendType {
+  return BACKEND_TYPES.some((candidate) => candidate === value);
 }
 
 function toLayoutOptions(options: GenerateOptions): { merge?: boolean } {
@@ -41,16 +52,14 @@ export function registerGenerateCommand(program: Command) {
     .option("-d, --dir <module>", "Target module for component generation")
     .option("--merge", "Generate a shared schema file under src/modules/<name>/schemas")
     .action(async (type: string, providedName: string | undefined, options: GenerateOptions) => {
-      const validTypes: FrontendType[] = ["module", "component", "crud"];
-
-      if (!validTypes.includes(type as FrontendType)) {
-        console.error(`Invalid type "${type}". Valid: ${validTypes.join(", ")}`);
+      if (!isFrontendType(type)) {
+        console.error(`Invalid type "${type}". Valid: ${FRONTEND_TYPES.join(", ")}`);
         process.exit(1);
       }
 
       const name = await resolveName(providedName, type);
 
-      switch (type as FrontendType) {
+      switch (type) {
         case "module":
           await generateFrontendModule(name, toLayoutOptions(options));
           break;
@@ -72,16 +81,14 @@ export function registerGenerateCommand(program: Command) {
     )
     .option("--merge", "Generate a shared schema file under src/modules/<name>/schemas")
     .action(async (type: string, providedName: string | undefined, options: GenerateOptions) => {
-      const validTypes: BackendType[] = ["module", "crud"];
-
-      if (!validTypes.includes(type as BackendType)) {
-        console.error(`Invalid type "${type}". Valid: ${validTypes.join(", ")}`);
+      if (!isBackendType(type)) {
+        console.error(`Invalid type "${type}". Valid: ${BACKEND_TYPES.join(", ")}`);
         process.exit(1);
       }
 
       const name = await resolveName(providedName, type);
 
-      switch (type as BackendType) {
+      switch (type) {
         case "module":
           await generateBackendModule(name, toLayoutOptions(options));
           break;

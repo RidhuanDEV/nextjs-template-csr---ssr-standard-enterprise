@@ -24,7 +24,8 @@ A monorepo of **production-ready Next.js templates** with enterprise-grade code 
 ## Quick Start — Create a New Project
 
 ```bash
-# 1. Install root CLI dependencies
+# From the frontend package root
+cd frontend
 cd cli && npm install && cd ..
 
 # 2. Scaffold a new project (interactive)
@@ -34,6 +35,15 @@ npx tsx cli/bin/index.ts create my-app
 npx tsx cli/bin/index.ts create my-app --template csr
 npx tsx cli/bin/index.ts create my-app --template ssr
 ```
+
+If you stay in the monorepo root instead of changing into `frontend/`, call the root create CLI explicitly:
+
+```bash
+npx tsx "$PWD/frontend/cli/bin/index.ts" create my-app --template csr
+npx tsx "$PWD/frontend/cli/bin/index.ts" create my-app --template ssr
+```
+
+> Note: if `tsx` is not already available in your shell, `npx` may prompt once to download it on first run.
 
 The CLI copies the selected template, updates `package.json`, and prints next steps.
 
@@ -70,7 +80,7 @@ npm run db:seed
 npm run dev
 ```
 
-Default credentials after seeding: `admin@example.com` / `password123`
+Default credentials after seeding: `admin@example.com` / `admin123`
 
 #### Docker Compose Services
 
@@ -105,6 +115,13 @@ npx tsx cli/bin/index.ts audit
 npx tsx cli/bin/index.ts audit --module product
 ```
 
+If you stay in the monorepo root after scaffolding, call the project CLI directly:
+
+```bash
+npx tsx "$PWD/my-app/cli/bin/index.ts" generate module product
+npx tsx "$PWD/my-app/cli/bin/index.ts" audit --module product
+```
+
 ### SSR Generator Commands
 
 ```bash
@@ -128,6 +145,14 @@ npx tsx cli/bin/index.ts generate crud product
 
 # Audit all modules
 npx tsx cli/bin/index.ts audit
+```
+
+If you stay in the monorepo root after scaffolding, call the project CLI directly:
+
+```bash
+npx tsx "$PWD/my-app/cli/bin/index.ts" generate backend module product
+npx tsx "$PWD/my-app/cli/bin/index.ts" generate crud product
+npx tsx "$PWD/my-app/cli/bin/index.ts" audit
 ```
 
 ### What Gets Generated

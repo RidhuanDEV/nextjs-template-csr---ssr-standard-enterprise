@@ -1,16 +1,14 @@
 import path from 'node:path';
-import { resolveAppDir, writeFileSafe, ensureDir } from '../utils/paths.js';
-import { createVariables, renderTemplate } from '../utils/template.js';
-import { generateModule } from './module.js';
+import { resolveAppDir, writeFileSafe, ensureDir } from '../utils/paths.ts';
+import { createVariables, renderTemplate } from '../utils/template.ts';
+import { generateModule } from './module.ts';
 
 const LIST_PAGE_TEMPLATE = `'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 import {
   use{{NamePlural}},
-  useDelete{{Name}},
 } from '@/modules/{{nameKebab}}';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -18,12 +16,10 @@ import { Spinner } from '@/components/ui/Spinner';
 import type { {{Name}}ListItem } from '@/modules/{{nameKebab}}';
 
 export default function {{NamePlural}}ListPage() {
-  const router = useRouter();
   const [search, setSearch] = useState('');
   const { data, isLoading } = use{{NamePlural}}(
     search.trim().length > 0 ? { search: search.trim() } : undefined,
   );
-  const deleteMutation = useDelete{{Name}}();
 
   function handleSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

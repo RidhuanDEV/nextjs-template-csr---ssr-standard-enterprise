@@ -13,7 +13,7 @@ const publicPaths = [
 ];
 const apiProtectedPaths = ["/api/users", "/api/roles"];
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // Skip public paths

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createVariables, normalizeEntityName } from "./template.js";
+import { createVariables, normalizeEntityName } from "./template.ts";
 
 describe("template naming utilities", () => {
   it("normalizes entity names to singular kebab-case", () => {

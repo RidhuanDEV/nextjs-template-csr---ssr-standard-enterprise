@@ -19,6 +19,15 @@ function resolveTemplatesRoot(): string {
   throw new Error("Could not locate templates/ directory");
 }
 
+function createDirectCliCommand(targetDir: string): string {
+  const cliEntryPath = path.relative(
+    process.cwd(),
+    path.join(targetDir, "cli", "bin", "index.ts"),
+  );
+
+  return `npx tsx "${cliEntryPath || path.join("cli", "bin", "index.ts")}"`;
+}
+
 export function registerCreateCommand(program: Command) {
   program
     .command("create <name>")
@@ -26,6 +35,7 @@ export function registerCreateCommand(program: Command) {
     .option("-t, --template <type>", "Template type: csr or ssr")
     .action(async (name: string, options: { template?: string }) => {
       const targetDir = path.resolve(process.cwd(), name);
+      const projectName = path.basename(targetDir);
 
       if (await fs.pathExists(targetDir)) {
         const { overwrite } = await inquirer.prompt<{ overwrite: boolean }>([
@@ -90,14 +100,23 @@ export function registerCreateCommand(program: Command) {
 
       // Update package.json name
       const pkgPath = path.join(targetDir, "package.json");
-      const pkg = (await fs.readJSON(pkgPath)) as Record<string, string>;
-      pkg.name = name;
+      const pkg = await fs.readJSON(pkgPath);
+
+      if (!pkg || typeof pkg !== "object" || Array.isArray(pkg)) {
+        throw new Error(`Invalid package.json at: ${pkgPath}`);
+      }
+
+      Reflect.set(pkg, "name", projectName);
       await fs.writeJSON(pkgPath, pkg, { spaces: 2 });
 
       console.log(`\nProject "${name}" created successfully.\n`);
       console.log("Next steps:");
       console.log(`  cd ${name}`);
-      console.log("  cp .env.example .env.local");
+      console.log(
+        templateType === "next-ssr"
+          ? "  cp .env.example .env"
+          : "  cp .env.example .env.local",
+      );
       console.log("  npm install");
 
       if (templateType === "next-ssr") {
@@ -110,13 +129,24 @@ export function registerCreateCommand(program: Command) {
       }
 
       console.log("\n  npm run dev");
+      console.log(
+        "\n  # Or call the project CLI directly without changing directories",
+      );
+      console.log(
+        `  ${createDirectCliCommand(targetDir)} generate module <name>`,
+      );
       console.log("");
       console.log("Generate code:");
       console.log("  npx tsx cli/bin/index.ts generate module <name>");
       console.log("  npx tsx cli/bin/index.ts generate crud <name>");
       console.log("  npx tsx cli/bin/index.ts generate component <name>");
+      console.log("  npx tsx cli/bin/index.ts audit --module <name>");
 
       if (templateType === "next-ssr") {
+        console.log(
+          "  npx tsx cli/bin/index.ts generate frontend module <name>",
+        );
+        console.log("  npx tsx cli/bin/index.ts generate frontend crud <name>");
         console.log(
           "  npx tsx cli/bin/index.ts generate backend module <name>",
         );

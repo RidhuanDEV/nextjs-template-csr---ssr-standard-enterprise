@@ -2,7 +2,7 @@ import os from "node:os";
 import path from "node:path";
 import fs from "fs-extra";
 import { afterEach, describe, expect, it } from "vitest";
-import { findProjectRoot, writeFileSafe } from "./paths.js";
+import { findProjectRoot, writeFileSafe } from "./paths.ts";
 
 const tempDirectories: string[] = [];
 

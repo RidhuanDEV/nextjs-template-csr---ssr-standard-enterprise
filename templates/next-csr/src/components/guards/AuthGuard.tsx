@@ -8,18 +8,19 @@ import { LoadingScreen } from '@/components/feedback/LoadingScreen';
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const token = useAuthStore((s) => s.token);
-  const [hydrated, setHydrated] = useState(false);
+  const [hydrated, setHydrated] = useState(() => useAuthStore.persist.hasHydrated());
 
   useEffect(() => {
-    if (useAuthStore.persist.hasHydrated()) {
-      setHydrated(true);
-    } else {
-      const unsub = useAuthStore.persist.onFinishHydration(() => {
-        setHydrated(true);
-      });
-      return unsub;
+    if (hydrated) {
+      return;
     }
-  }, []);
+
+    const unsub = useAuthStore.persist.onFinishHydration(() => {
+      setHydrated(true);
+    });
+
+    return unsub;
+  }, [hydrated]);
 
   useEffect(() => {
     if (hydrated && !token) {

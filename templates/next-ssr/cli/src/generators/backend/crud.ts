@@ -1,8 +1,8 @@
 import path from "node:path";
-import { ensureDir, fileExists, resolveProjectRoot, writeFileSafe } from "../../utils/paths.js";
-import { createVariables, renderTemplate } from "../../utils/template.js";
-import { generateBackendModule } from "./module.js";
-import { getModuleGenerationPaths, type GeneratorLayoutOptions } from "../shared.js";
+import { ensureDir, fileExists, resolveProjectRoot, writeFileSafe } from "../../utils/paths.ts";
+import { createVariables, renderTemplate } from "../../utils/template.ts";
+import { generateBackendModule } from "./module.ts";
+import { getModuleGenerationPaths, type GeneratorLayoutOptions } from "../shared.ts";
 
 const LIST_ROUTE_TEMPLATE = `import { NextResponse } from 'next/server';
 import { requireSession } from '@/server/auth/session';

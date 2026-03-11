@@ -1,11 +1,13 @@
 import type { Command } from 'commander';
 import inquirer from 'inquirer';
-import { generateModule } from '../generators/module.js';
-import { generateComponent, type ComponentGenerationRequest } from '../generators/component.js';
-import { generateCrud } from '../generators/crud.js';
-import { normalizeEntityName } from '../utils/template.js';
+import { generateModule } from '../generators/module.ts';
+import { generateComponent, type ComponentGenerationRequest } from '../generators/component.ts';
+import { generateCrud } from '../generators/crud.ts';
+import { normalizeEntityName } from '../utils/template.ts';
 
 type FrontendType = 'module' | 'component' | 'crud';
+
+const FRONTEND_TYPES: FrontendType[] = ['module', 'component', 'crud'];
 
 interface GenerateOptions {
   dir?: string;
@@ -19,6 +21,10 @@ function resolveComponentRequest(
     componentName: name,
     moduleName: normalizeEntityName(options.dir ?? name),
   };
+}
+
+function isFrontendType(value: string): value is FrontendType {
+  return FRONTEND_TYPES.some((candidate) => candidate === value);
 }
 
 export function registerGenerateCommand(program: Command) {
@@ -36,16 +42,14 @@ export function registerGenerateCommand(program: Command) {
     )
     .option('-d, --dir <module>', 'Target module for component generation')
     .action(async (type: string, providedName: string | undefined, options: GenerateOptions) => {
-      const validTypes: FrontendType[] = ['module', 'component', 'crud'];
-
-      if (!validTypes.includes(type as FrontendType)) {
-        console.error(`Invalid type "${type}". Valid: ${validTypes.join(', ')}`);
+      if (!isFrontendType(type)) {
+        console.error(`Invalid type "${type}". Valid: ${FRONTEND_TYPES.join(', ')}`);
         process.exit(1);
       }
 
       const name = await resolveName(providedName, type);
 
-      switch (type as FrontendType) {
+      switch (type) {
         case 'module':
           await generateModule(name);
           break;

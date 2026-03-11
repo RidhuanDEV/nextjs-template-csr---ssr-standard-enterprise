@@ -1,7 +1,7 @@
-import { Queue, Worker, type Processor, type ConnectionOptions } from "bullmq";
-import { redis } from "@/server/cache/redis";
+import { Queue, Worker, type Processor } from "bullmq";
+import { createRedisConnectionOptions } from "@/server/cache/redis";
 
-const connection = redis as unknown as ConnectionOptions;
+const connection = createRedisConnectionOptions();
 
 // How to use:
 // - Call createQueue('queue-name') from services/routes when a task should run asynchronously.

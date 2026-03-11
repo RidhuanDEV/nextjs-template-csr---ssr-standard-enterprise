@@ -4,8 +4,8 @@ import {
   resolveComponentsDir,
   writeFileSafe,
   ensureDir,
-} from '../utils/paths.js';
-import { createComponentVariables, renderTemplate } from '../utils/template.js';
+} from '../utils/paths.ts';
+import { createComponentVariables, renderTemplate } from '../utils/template.ts';
 
 const COMPONENT_TEMPLATE = `'use client';
 

@@ -1,13 +1,13 @@
 import path from "node:path";
-import { ensureDir, writeFileSafe } from "../../utils/paths.js";
-import { createVariables, renderTemplate } from "../../utils/template.js";
+import { ensureDir, writeFileSafe } from "../../utils/paths.ts";
+import { createVariables, renderTemplate } from "../../utils/template.ts";
 import {
   getModuleGenerationPaths,
   type GeneratorLayoutOptions,
   renderRootModuleIndex,
   SHARED_SCHEMA_TEMPLATE,
   SHARED_TYPES_TEMPLATE,
-} from "../shared.js";
+} from "../shared.ts";
 
 const CLIENT_INDEX_TEMPLATE = `export {
   create{{Name}}FormSchema,
@@ -63,6 +63,13 @@ interface ApiErrorPayload {
   message?: string;
 }
 
+type JsonPrimitive = string | number | boolean | null;
+type JsonValue = JsonPrimitive | JsonObject | JsonValue[];
+
+interface JsonObject {
+  [key: string]: JsonValue;
+}
+
 export interface {{Name}}HttpClient {
   list(filters: Search{{NamePlural}}Filters): Promise<PaginatedResponse<{{Name}}Response>>;
   getById(id: string): Promise<{{Name}}Response>;
@@ -88,12 +95,28 @@ function toSearchParams(filters: Search{{NamePlural}}Filters): URLSearchParams {
   return params;
 }
 
+function isApiErrorPayload(value: JsonValue): value is ApiErrorPayload {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    return false;
+  }
+
+  return (
+    (value.error === undefined || typeof value.error === 'string') &&
+    (value.message === undefined || typeof value.message === 'string')
+  );
+}
+
 async function readErrorMessage(
   response: Response,
   fallbackMessage: string,
 ): Promise<string> {
   try {
-    const payload = (await response.json()) as ApiErrorPayload;
+    const payload: JsonValue = await response.json();
+
+    if (!isApiErrorPayload(payload)) {
+      return fallbackMessage;
+    }
+
     return payload.error ?? payload.message ?? fallbackMessage;
   } catch {
     return fallbackMessage;
@@ -103,13 +126,13 @@ async function readErrorMessage(
 async function parseResponse<T>(
   response: Response,
   fallbackMessage: string,
-  parser: { parse: (value: object) => T },
+  parser: { parse: (value: JsonValue) => T },
 ): Promise<T> {
   if (!response.ok) {
     throw new Error(await readErrorMessage(response, fallbackMessage));
   }
 
-  const payload = (await response.json()) as object;
+  const payload: JsonValue = await response.json();
   return parser.parse(payload);
 }
 

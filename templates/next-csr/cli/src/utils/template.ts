@@ -1,6 +1,7 @@
 import pluralize from 'pluralize';
 
 export interface TemplateVariables {
+  [key: string]: string;
   rawName: string;
   nameKebab: string;
   nameSnake: string;
@@ -15,6 +16,7 @@ export interface TemplateVariables {
 }
 
 export interface ComponentVariables {
+  [key: string]: string;
   rawName: string;
   nameKebab: string;
   nameSnake: string;
@@ -61,10 +63,13 @@ export function createComponentVariables(input: string): ComponentVariables {
   };
 }
 
-export function renderTemplate<T extends object>(template: string, vars: T): string {
+export function renderTemplate<T extends Record<string, string>>(
+  template: string,
+  vars: T
+): string {
   let result = template;
 
-  for (const [key, value] of Object.entries(vars) as Array<[string, string]>) {
+  for (const [key, value] of Object.entries(vars)) {
     result = result.replaceAll(`{{${key}}}`, value);
   }
 

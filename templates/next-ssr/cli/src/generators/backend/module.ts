@@ -1,14 +1,14 @@
 import path from "node:path";
-import { ensureDir, writeFileSafe } from "../../utils/paths.js";
-import { createVariables, renderTemplate } from "../../utils/template.js";
+import { ensureDir, writeFileSafe } from "../../utils/paths.ts";
+import { createVariables, renderTemplate } from "../../utils/template.ts";
 import {
   getModuleGenerationPaths,
   type GeneratorLayoutOptions,
   renderRootModuleIndex,
   SHARED_SCHEMA_TEMPLATE,
   SHARED_TYPES_TEMPLATE,
-} from "../shared.js";
-import { updateModulesConstants, updatePermissionsConstants } from "./constants.js";
+} from "../shared.ts";
+import { updateModulesConstants, updatePermissionsConstants } from "./constants.ts";
 
 const PERMISSIONS_TEMPLATE = `export const {{NAME}}_PERMISSIONS = {
   READ: '{{namePluralKebab}}:read',
@@ -108,19 +108,24 @@ interface PolicyContext {
 }
 
 export const {{nameCamel}}Policy = {
-  canRead(_ctx: PolicyContext, _record: {{Name}}Record): boolean {
+  canRead(ctx: PolicyContext, record: {{Name}}Record): boolean {
+    void ctx;
+    void record;
     return true;
   },
 
-  canCreate(_ctx: PolicyContext): boolean {
+  canCreate(ctx: PolicyContext): boolean {
+    void ctx;
     return true;
   },
 
   canUpdate(ctx: PolicyContext, record: {{Name}}Record): boolean {
+    void record;
     return ctx.roles.includes('admin') || ctx.roles.includes('editor');
   },
 
-  canDelete(ctx: PolicyContext, _record: {{Name}}Record): boolean {
+  canDelete(ctx: PolicyContext, record: {{Name}}Record): boolean {
+    void record;
     return ctx.roles.includes('admin');
   },
 } as const;
@@ -163,7 +168,7 @@ const SORT_FIELDS = ['name', 'createdAt', 'updatedAt'] as const;
 type SortField = (typeof SORT_FIELDS)[number];
 
 function isSortField(value: string): value is SortField {
-  return SORT_FIELDS.includes(value as SortField);
+  return SORT_FIELDS.some((candidate) => candidate === value);
 }
 
 export function build{{Name}}Query(
@@ -248,10 +253,25 @@ const logger = createLogger('{{nameKebab}}-service');
 const CACHE_PREFIX = '{{namePluralKebab}}';
 const MODEL_KEY = '{{nameCamel}}';
 
-function get{{Name}}Delegate(client: object): {{Name}}Delegate {
-  const delegate = Reflect.get(client, MODEL_KEY) as {{Name}}Delegate | undefined;
+function hasDelegateMethod(value: object, methodName: string): boolean {
+  return typeof Reflect.get(value, methodName) === 'function';
+}
 
-  if (!delegate) {
+function is{{Name}}Delegate(value: object): value is {{Name}}Delegate {
+  return (
+    hasDelegateMethod(value, 'findMany') &&
+    hasDelegateMethod(value, 'count') &&
+    hasDelegateMethod(value, 'findUnique') &&
+    hasDelegateMethod(value, 'create') &&
+    hasDelegateMethod(value, 'update') &&
+    hasDelegateMethod(value, 'delete')
+  );
+}
+
+function get{{Name}}Delegate(client: object): {{Name}}Delegate {
+  const delegate = Reflect.get(client, MODEL_KEY);
+
+  if (typeof delegate !== 'object' || delegate === null || !is{{Name}}Delegate(delegate)) {
     throw new Error(
       'Prisma model "{{nameCamel}}" is unavailable. Add the {{Name}} model to prisma/schema.prisma, then run "npm run db:generate".',
     );
@@ -530,12 +550,23 @@ export const sample{{Name}}Record: {{Name}}Record = {
 };
 
 const {{nameCamel}}Delegate = {
-  findMany: vi.fn(async () => [] as {{Name}}Record[]),
-  count: vi.fn(async () => 0),
-  findUnique: vi.fn(async () => null as {{Name}}Record | null),
-  create: vi.fn(async () => sample{{Name}}Record),
-  update: vi.fn(async () => sample{{Name}}Record),
-  delete: vi.fn(async () => sample{{Name}}Record),
+  findMany: vi.fn<(args: object) => Promise<{{Name}}Record[]>>(async () => []),
+  count: vi.fn<(args: object) => Promise<number>>(async () => 0),
+  findUnique: vi.fn<(args: { where: { id: string } }) => Promise<{{Name}}Record | null>>(
+    async () => null,
+  ),
+  create: vi.fn<
+    (args: { data: { name: string; description?: string | null } }) => Promise<{{Name}}Record>
+  >(async () => sample{{Name}}Record),
+  update: vi.fn<
+    (args: {
+      where: { id: string };
+      data: { name?: string; description?: string | null };
+    }) => Promise<{{Name}}Record>
+  >(async () => sample{{Name}}Record),
+  delete: vi.fn<(args: { where: { id: string } }) => Promise<{{Name}}Record>>(
+    async () => sample{{Name}}Record,
+  ),
 };
 
 const auditLog = {

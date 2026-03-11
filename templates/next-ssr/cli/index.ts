@@ -1,1 +1,1 @@
-import "./bin/index.js";
+import "./bin/index.ts";

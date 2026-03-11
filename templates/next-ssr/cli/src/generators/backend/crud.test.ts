@@ -11,7 +11,7 @@ const mocks = vi.hoisted(() => ({
   })),
 }));
 
-vi.mock("../../utils/paths.js", () => ({
+vi.mock("../../utils/paths.ts", () => ({
   ensureDir: mocks.ensureDir,
   fileExists: mocks.fileExists,
   resolveModulesDir: () => "/workspace/src/modules",
@@ -19,11 +19,11 @@ vi.mock("../../utils/paths.js", () => ({
   writeFileSafe: mocks.writeFileSafe,
 }));
 
-vi.mock("./module.js", () => ({
+vi.mock("./module.ts", () => ({
   generateBackendModule: mocks.generateBackendModule,
 }));
 
-const { generateBackendCrud } = await import("./crud.js");
+const { generateBackendCrud } = await import("./crud.ts");
 
 describe("generateBackendCrud", () => {
   beforeEach(() => {

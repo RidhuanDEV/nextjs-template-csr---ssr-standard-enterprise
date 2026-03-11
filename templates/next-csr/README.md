@@ -130,6 +130,18 @@ npx tsx cli/bin/index.ts generate component
 npx tsx cli/bin/index.ts generate crud
 ```
 
+If you are already inside the generated project root and want an explicit path, the equivalent command is:
+
+```bash
+npx tsx "$PWD/cli/bin/index.ts" generate module
+```
+
+If you stay outside the generated project folder, point directly to the project CLI entrypoint:
+
+```bash
+npx tsx "$PWD/<project-name>/cli/bin/index.ts" generate module
+```
+
 The generator will prompt for names interactively and scaffold files into `src/modules/<name>/`.
 
 ---

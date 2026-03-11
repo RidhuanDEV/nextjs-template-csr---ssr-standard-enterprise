@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolveComponentGenerationRequest } from "./generate.js";
+import { resolveComponentGenerationRequest } from "./generate.ts";
 
 describe("component generation request", () => {
   it("uses the provided --dir value as the module name", () => {

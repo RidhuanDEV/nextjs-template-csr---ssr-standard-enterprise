@@ -4,9 +4,9 @@ import {
   resolveConstantsDir,
   writeFileSafe,
   ensureDir,
-} from '../utils/paths.js';
-import { createVariables, renderTemplate } from '../utils/template.js';
-import { updateModulesConstants, updatePermissionsConstants } from './constants.js';
+} from '../utils/paths.ts';
+import { createVariables, renderTemplate } from '../utils/template.ts';
+import { updateModulesConstants, updatePermissionsConstants } from './constants.ts';
 
 const TYPES_TEMPLATE = `export interface {{Name}}Response {
   id: string;

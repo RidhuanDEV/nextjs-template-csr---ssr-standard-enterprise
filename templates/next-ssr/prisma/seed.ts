@@ -1,8 +1,10 @@
+import "dotenv/config";
+
 import { PrismaClient } from "../src/generated/prisma/client";
-import { PrismaMariaDb } from "@prisma/adapter-mariadb";
+import { createMariaDbAdapter } from "../src/server/db/adapter";
 import { hash } from "bcryptjs";
 
-const adapter = new PrismaMariaDb(process.env.DATABASE_URL!);
+const adapter = createMariaDbAdapter();
 const prisma = new PrismaClient({ adapter });
 
 const PERMISSIONS = [
@@ -44,18 +46,16 @@ async function main() {
     where: { name: "manager" },
     update: {
       permissions: {
-        set: PERMISSIONS.filter((p) => !p.key.startsWith("roles:")).map(
-          (p) => ({ key: p.key }),
-        ),
+        set: PERMISSIONS.filter((p) => !p.key.startsWith("roles:")).map((p) => ({ key: p.key })),
       },
     },
     create: {
       name: "manager",
       description: "User management access",
       permissions: {
-        connect: PERMISSIONS.filter((p) => !p.key.startsWith("roles:")).map(
-          (p) => ({ key: p.key }),
-        ),
+        connect: PERMISSIONS.filter((p) => !p.key.startsWith("roles:")).map((p) => ({
+          key: p.key,
+        })),
       },
     },
   });

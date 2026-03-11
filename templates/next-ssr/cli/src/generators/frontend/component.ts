@@ -1,7 +1,7 @@
 import path from "node:path";
-import { resolveModulesDir, writeFileSafe, ensureDir } from "../../utils/paths.js";
-import { createComponentVariables, renderTemplate } from "../../utils/template.js";
-import type { ComponentGenerationRequest } from "../../commands/generate.js";
+import { resolveModulesDir, writeFileSafe, ensureDir } from "../../utils/paths.ts";
+import { createComponentVariables, renderTemplate } from "../../utils/template.ts";
+import type { ComponentGenerationRequest } from "../../commands/generate.ts";
 
 const COMPONENT_TEMPLATE = `'use client';
 

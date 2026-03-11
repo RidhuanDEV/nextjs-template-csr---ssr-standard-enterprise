@@ -67,7 +67,7 @@ Open [http://localhost:3000](http://localhost:3000).
 **Default credentials after seeding:**
 
 - Email: `admin@example.com`
-- Password: `password123`
+- Password: `admin123`
 
 ---
 
@@ -92,6 +92,8 @@ NEXT_PUBLIC_APP_URL="http://localhost:3000"
 
 All variables are validated at startup using Zod. Missing or invalid values will throw a descriptive error.
 
+`npm run db:seed` loads `.env` explicitly before Prisma starts, so the seed script works consistently as long as the project `.env` file exists.
+
 ---
 
 ## Available Scripts
@@ -102,7 +104,7 @@ npm run dev           # Start dev server with Turbopack
 npm run build         # Production build
 npm run start         # Start production server
 npm run typecheck     # Run TypeScript strict compilation
-npm run lint          # Run ESLint for src/ and cli/
+npm run lint          # Run ESLint for src/, cli/, Prisma scripts, and config files
 npm run lint:fix      # Auto-fix lint issues where possible
 npm run test          # Run Vitest once
 
@@ -165,7 +167,7 @@ src/
 │   └── queue/                  # BullMQ queue setup
 │
 ├── generated/prisma/           # Auto-generated — DO NOT EDIT
-├── middleware.ts               # Next.js middleware — JWT auth + route protection
+├── proxy.ts                    # Next.js proxy — JWT auth + route protection
 ├── store/                      # Zustand stores (client-side state)
 ├── types/                      # Global TypeScript types
 └── utils/                      # Utility functions
@@ -176,7 +178,7 @@ src/
 ## Auth & RBAC Flow
 
 1. `POST /api/auth/login` → validates credentials → issues JWT (stored in `httpOnly` cookie)
-2. `middleware.ts` (Next.js middleware) intercepts every request, verifies JWT, rejects unauthenticated requests
+2. `proxy.ts` (Next.js proxy) intercepts every request, verifies JWT, rejects unauthenticated requests
 3. User has a **Role**, and each Role has many **Permissions**
 4. Permissions are checked via `server/auth/permissions.ts` using permission keys defined in `lib/constants/permissions.ts`
 5. Dashboard pages are **Server Components** — they call server-side services directly (no client fetch needed)
@@ -308,6 +310,18 @@ npx tsx cli/bin/index.ts generate frontend module product
 npx tsx cli/bin/index.ts generate crud product --merge
 ```
 
+If you are already inside the generated project root and prefer an explicit path, the equivalent absolute-style command is:
+
+```bash
+npx tsx "$PWD/cli/bin/index.ts" generate module product
+```
+
+If you stay outside the generated project folder, point to the project CLI entrypoint directly:
+
+```bash
+npx tsx "$PWD/<project-name>/cli/bin/index.ts" generate module product
+```
+
 By default the generator emits a split enterprise layout:
 
 ```text
@@ -343,6 +357,9 @@ npm run cli:build
 
 # 2. Generate the module
 node cli/dist/index.js generate crud product
+
+# Or, from outside the generated project folder
+node "$PWD/<project-name>/cli/dist/index.js" generate crud product
 
 # 3. Add the Prisma model and then run the migration
 npm run db:migrate -- --name add-products

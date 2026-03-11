@@ -1,7 +1,7 @@
 import path from 'node:path';
 import fs from 'fs-extra';
 import type { Command } from 'commander';
-import { resolveProjectRoot } from '../utils/paths.js';
+import { resolveProjectRoot } from '../utils/paths.ts';
 
 interface AuditFinding {
   category: 'structure' | 'quality' | 'security' | 'performance';
