@@ -1,5 +1,5 @@
-import { QueryBuilder } from '@/lib/query/query-builder';
-import type { SearchUserInput } from '../schemas/user.schema';
+import { QueryBuilder } from "@/lib/query/query-builder";
+import type { SearchUserInput } from "../schemas/user.schema";
 
 export function buildUserQuery(params: SearchUserInput) {
   const builder = new QueryBuilder({
@@ -10,8 +10,8 @@ export function buildUserQuery(params: SearchUserInput) {
   });
 
   const result = builder
-    .withSearch(['name', 'email'])
-    .withSort(['name', 'email', 'createdAt', 'updatedAt'])
+    .withSearch(["name", "email"])
+    .withSort(["name", "email", "createdAt", "updatedAt"])
     .build();
 
   // Add module-specific filters

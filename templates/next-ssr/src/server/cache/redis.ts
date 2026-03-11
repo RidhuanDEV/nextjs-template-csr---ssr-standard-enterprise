@@ -1,10 +1,12 @@
-import Redis from 'ioredis';
+import Redis from "ioredis";
 
 const globalForRedis = globalThis as { redis?: Redis };
 
-export const redis = globalForRedis.redis ?? new Redis(process.env.REDIS_URL ?? 'redis://localhost:6379');
+export const redis =
+  globalForRedis.redis ??
+  new Redis(process.env.REDIS_URL ?? "redis://localhost:6379");
 
-if (process.env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV !== "production") {
   globalForRedis.redis = redis;
 }
 
@@ -14,8 +16,12 @@ export async function cacheGet<T>(key: string): Promise<T | null> {
   return JSON.parse(data) as T;
 }
 
-export async function cacheSet(key: string, value: unknown, ttlSeconds = 300): Promise<void> {
-  await redis.set(key, JSON.stringify(value), 'EX', ttlSeconds);
+export async function cacheSet(
+  key: string,
+  value: unknown,
+  ttlSeconds = 300,
+): Promise<void> {
+  await redis.set(key, JSON.stringify(value), "EX", ttlSeconds);
 }
 
 export async function cacheDel(key: string): Promise<void> {

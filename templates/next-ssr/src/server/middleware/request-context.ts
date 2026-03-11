@@ -1,4 +1,4 @@
-import { type JwtPayload } from '@/server/auth/jwt';
+import { type JwtPayload } from "@/server/auth/jwt";
 
 interface RequestContext {
   session: JwtPayload | null;
@@ -8,11 +8,11 @@ interface RequestContext {
 
 export function createRequestContext(
   session: JwtPayload | null,
-  headers: Headers
+  headers: Headers,
 ): RequestContext {
   return {
     session,
     requestId: crypto.randomUUID(),
-    ip: headers.get('x-forwarded-for') ?? headers.get('x-real-ip') ?? 'unknown',
+    ip: headers.get("x-forwarded-for") ?? headers.get("x-real-ip") ?? "unknown",
   };
 }

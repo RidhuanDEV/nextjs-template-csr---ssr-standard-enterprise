@@ -8,7 +8,12 @@ export interface PaginatedResponse<T> {
   };
 }
 
-export function paginate<T>(data: T[], total: number, page: number, limit: number): PaginatedResponse<T> {
+export function paginate<T>(
+  data: T[],
+  total: number,
+  page: number,
+  limit: number,
+): PaginatedResponse<T> {
   return {
     data,
     meta: {

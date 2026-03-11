@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import { useToast } from '@/components/feedback/Toast';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
-import type { UserResponse } from '@/modules/user/dto/user-response.dto';
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useToast } from "@/components/feedback/Toast";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Select } from "@/components/ui/Select";
+import type { UserResponse } from "@/modules/user/dto/user-response.dto";
 
 interface EditUserFormProps {
   user: UserResponse;
@@ -24,35 +24,35 @@ export function EditUserForm({ user, roles }: EditUserFormProps) {
 
     const formData = new FormData(e.currentTarget);
     const body: Record<string, unknown> = {
-      name: formData.get('name'),
-      email: formData.get('email'),
-      roleId: formData.get('roleId'),
+      name: formData.get("name"),
+      email: formData.get("email"),
+      roleId: formData.get("roleId"),
     };
 
-    const password = formData.get('password') as string;
+    const password = formData.get("password") as string;
     if (password) {
       body.password = password;
     }
 
     try {
       const res = await fetch(`/api/users/${user.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        toast.error(data.message || 'Failed to update user');
+        toast.error(data.message || "Failed to update user");
         return;
       }
 
-      toast.success('User updated');
-      router.push('/users');
+      toast.success("User updated");
+      router.push("/users");
       router.refresh();
     } catch {
-      toast.error('Something went wrong');
+      toast.error("Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -61,9 +61,25 @@ export function EditUserForm({ user, roles }: EditUserFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <Input label="Name" name="name" defaultValue={user.name} required />
-      <Input label="Email" name="email" type="email" defaultValue={user.email} required />
-      <Input label="New Password" name="password" type="password" placeholder="Leave blank to keep current" />
-      <Select label="Role" name="roleId" options={roles} defaultValue={user.role.id} />
+      <Input
+        label="Email"
+        name="email"
+        type="email"
+        defaultValue={user.email}
+        required
+      />
+      <Input
+        label="New Password"
+        name="password"
+        type="password"
+        placeholder="Leave blank to keep current"
+      />
+      <Select
+        label="Role"
+        name="roleId"
+        options={roles}
+        defaultValue={user.role.id}
+      />
       <div className="flex gap-2">
         <Button type="submit" loading={loading}>
           Save Changes

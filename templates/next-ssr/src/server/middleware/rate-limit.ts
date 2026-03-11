@@ -1,4 +1,4 @@
-import { redis } from '@/server/cache/redis';
+import { redis } from "@/server/cache/redis";
 
 interface RateLimitConfig {
   windowMs: number;
@@ -7,7 +7,7 @@ interface RateLimitConfig {
 
 export async function checkRateLimit(
   key: string,
-  config: RateLimitConfig = { windowMs: 60_000, max: 60 }
+  config: RateLimitConfig = { windowMs: 60_000, max: 60 },
 ): Promise<{ allowed: boolean; remaining: number }> {
   const now = Date.now();
   const windowKey = `rl:${key}:${Math.floor(now / config.windowMs)}`;

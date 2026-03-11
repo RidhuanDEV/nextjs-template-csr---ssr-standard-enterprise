@@ -1,9 +1,9 @@
-import { cookies } from 'next/headers';
-import { verifyToken, type JwtPayload } from './jwt';
+import { cookies } from "next/headers";
+import { verifyToken, type JwtPayload } from "./jwt";
 
 export async function getSession(): Promise<JwtPayload | null> {
   const cookieStore = await cookies();
-  const token = cookieStore.get('token')?.value;
+  const token = cookieStore.get("token")?.value;
   if (!token) return null;
 
   try {
@@ -16,7 +16,7 @@ export async function getSession(): Promise<JwtPayload | null> {
 export async function requireSession(): Promise<JwtPayload> {
   const session = await getSession();
   if (!session) {
-    throw new Error('Unauthorized');
+    throw new Error("Unauthorized");
   }
   return session;
 }

@@ -1,49 +1,55 @@
-import path from 'node:path';
-import { resolveProjectRoot, writeFileSafe, ensureDir } from '../../utils/paths.js';
-import { createVariables, renderTemplate } from '../../utils/template.js';
-import { generateFrontendModule } from './module.js';
+import path from "node:path";
+import { resolveProjectRoot, writeFileSafe, ensureDir } from "../../utils/paths.js";
+import { createVariables, renderTemplate } from "../../utils/template.js";
+import { generateFrontendModule } from "./module.js";
+import type { GeneratorLayoutOptions } from "../shared.js";
 
-const LIST_PAGE_TEMPLATE = `import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
-import { {{Name}}sTable } from './{{Name}}sTable';
+const LIST_PAGE_TEMPLATE = `import Link from 'next/link';
+import { requireSession } from '@/server/auth/session';
+import { requirePermission } from '@/server/auth/permissions';
+import {
+  list{{NamePlural}},
+  {{NAME}}_PERMISSIONS,
+} from '@/modules/{{nameKebab}}/server';
+import { {{NamePlural}}Table } from './{{NamePlural}}Table';
 
-async function get{{Name}}s(page: number, search: string) {
-  const cookieStore = await cookies();
-  const params = new URLSearchParams({ page: String(page), limit: '10' });
-  if (search) params.set('search', search);
-
-  const res = await fetch(
-    \`\${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/api/{{namePlural}}?\${params}\`,
-    { headers: { Cookie: cookieStore.toString() }, cache: 'no-store' }
-  );
-
-  if (res.status === 401) redirect('/login');
-  if (!res.ok) throw new Error('Failed to fetch {{namePlural}}');
-  return res.json();
+interface PageProps {
+  searchParams: Promise<{
+    page?: string;
+    search?: string;
+  }>;
 }
 
-export default async function {{Name}}sPage({
-  searchParams,
-}: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) {
-  const sp = await searchParams;
-  const page = Number(sp.page) || 1;
-  const search = typeof sp.search === 'string' ? sp.search : '';
-  const data = await get{{Name}}s(page, search);
+export default async function {{NamePlural}}Page({ searchParams }: PageProps) {
+  const session = await requireSession();
+  requirePermission(session, {{NAME}}_PERMISSIONS.READ);
+
+  const params = await searchParams;
+  const parsedPage = Number(params.page ?? '1');
+  const page = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+  const search = params.search?.trim() || '';
+  const data = await list{{NamePlural}}({
+    page,
+    limit: 10,
+    search: search.length > 0 ? search : undefined,
+    sort: '-createdAt',
+  });
 
   return (
-    <div>
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">{{NamePlural}}</h1>
-        <a
-          href="/{{namePlural}}/create"
-          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
+          {{NamePlural}}
+        </h1>
+        <Link
+          href="/{{namePluralKebab}}/create"
+          className="inline-flex h-10 items-center rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
         >
           Create {{Name}}
-        </a>
+        </Link>
       </div>
-      <{{Name}}sTable data={data} currentPage={page} currentSearch={search} />
+
+      <{{NamePlural}}Table data={data} currentSearch={search} />
     </div>
   );
 }
@@ -51,65 +57,81 @@ export default async function {{Name}}sPage({
 
 const LIST_TABLE_TEMPLATE = `'use client';
 
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
+import type { PaginatedResponse } from '@/lib/query/pagination';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import type { {{Name}}ListItem } from '@/modules/{{nameKebab}}/types/{{nameKebab}}.types';
 
-interface {{Name}}sTableProps {
-  data: {
-    data: Array<{ id: string; [key: string]: unknown }>;
-    meta: { page: number; totalPages: number; total: number };
-  };
-  currentPage: number;
+interface {{NamePlural}}TableProps {
+  data: PaginatedResponse<{{Name}}ListItem>;
   currentSearch: string;
 }
 
-export function {{Name}}sTable({ data, currentPage, currentSearch }: {{Name}}sTableProps) {
+export function {{NamePlural}}Table({
+  data,
+  currentSearch,
+}: {{NamePlural}}TableProps) {
   const router = useRouter();
   const [search, setSearch] = useState(currentSearch);
 
-  function handleSearch(e: React.FormEvent) {
-    e.preventDefault();
+  function handleSearch(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
     const params = new URLSearchParams();
-    if (search) params.set('search', search);
-    router.push(\`/{{namePlural}}?\${params}\`);
+
+    if (search.trim().length > 0) {
+      params.set('search', search.trim());
+    }
+
+    router.push('/{{namePluralKebab}}?' + params.toString());
   }
 
   return (
-    <div>
-      <form onSubmit={handleSearch} className="mb-4 flex gap-2">
-        <input
-          type="text"
+    <div className="space-y-4">
+      <form onSubmit={handleSearch} className="flex flex-col gap-3 md:flex-row md:items-end">
+        <Input
+          label="Search {{NamePlural}}"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search..."
-          className="rounded-lg border px-3 py-2 text-sm"
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder="Search by name or description"
         />
-        <button
-          type="submit"
-          className="rounded-lg bg-gray-100 px-4 py-2 text-sm hover:bg-gray-200"
-        >
-          Search
-        </button>
+        <Button type="submit">Search</Button>
       </form>
 
-      <div className="overflow-hidden rounded-lg border">
-        <table className="min-w-full divide-y">
-          <thead className="bg-gray-50">
+      <div className="overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800">
+        <table className="min-w-full divide-y divide-zinc-200 dark:divide-zinc-800">
+          <thead className="bg-zinc-50 dark:bg-zinc-900">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">ID</th>
-              {/* TODO: add columns */}
-              <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">Actions</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                Name
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                Description
+              </th>
+              <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                Actions
+              </th>
             </tr>
           </thead>
-          <tbody className="divide-y bg-white">
+          <tbody className="divide-y divide-zinc-200 bg-white dark:divide-zinc-800 dark:bg-zinc-950">
             {data.data.map((item) => (
               <tr key={item.id}>
-                <td className="px-4 py-3 text-sm">{item.id}</td>
-                {/* TODO: add cells */}
+                <td className="px-4 py-3 text-sm font-medium text-zinc-900 dark:text-zinc-50">
+                  {item.name}
+                </td>
+                <td className="px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400">
+                  {item.description ?? '—'}
+                </td>
                 <td className="px-4 py-3 text-right text-sm">
-                  <a href={\`/{{namePlural}}/\${item.id}\`} className="text-blue-600 hover:underline">
+                  <Link
+                    href={'/{{namePluralKebab}}/' + item.id}
+                    className="text-zinc-900 hover:underline dark:text-zinc-50"
+                  >
                     Edit
-                  </a>
+                  </Link>
                 </td>
               </tr>
             ))}
@@ -117,20 +139,22 @@ export function {{Name}}sTable({ data, currentPage, currentSearch }: {{Name}}sTa
         </table>
       </div>
 
-      <div className="mt-4 flex items-center justify-between text-sm text-gray-600">
+      <div className="flex items-center justify-between text-sm text-zinc-600 dark:text-zinc-400">
         <span>Total: {data.meta.total}</span>
-        <div className="flex gap-2">
-          {currentPage > 1 && (
-            <a href={\`/{{namePlural}}?page=\${currentPage - 1}\`} className="text-blue-600 hover:underline">
+        <div className="flex items-center gap-3">
+          {data.meta.page > 1 ? (
+            <Link href={'/{{namePluralKebab}}?page=' + String(data.meta.page - 1)}>
               Previous
-            </a>
-          )}
-          <span>Page {data.meta.page} of {data.meta.totalPages}</span>
-          {currentPage < data.meta.totalPages && (
-            <a href={\`/{{namePlural}}?page=\${currentPage + 1}\`} className="text-blue-600 hover:underline">
+            </Link>
+          ) : null}
+          <span>
+            Page {data.meta.page} of {data.meta.totalPages}
+          </span>
+          {data.meta.page < data.meta.totalPages ? (
+            <Link href={'/{{namePluralKebab}}?page=' + String(data.meta.page + 1)}>
               Next
-            </a>
-          )}
+            </Link>
+          ) : null}
         </div>
       </div>
     </div>
@@ -138,12 +162,27 @@ export function {{Name}}sTable({ data, currentPage, currentSearch }: {{Name}}sTa
 }
 `;
 
-const CREATE_PAGE_TEMPLATE = `import { Create{{Name}}Form } from './Create{{Name}}Form';
+const CREATE_PAGE_TEMPLATE = `import { requireSession } from '@/server/auth/session';
+import { requirePermission } from '@/server/auth/permissions';
+import {
+  {{NAME}}_PERMISSIONS,
+} from '@/modules/{{nameKebab}}/server';
+import { Create{{Name}}Form } from '@/modules/{{nameKebab}}/client/forms/Create{{Name}}Form';
 
-export default function Create{{Name}}Page() {
+export default async function Create{{Name}}Page() {
+  const session = await requireSession();
+  requirePermission(session, {{NAME}}_PERMISSIONS.CREATE);
+
   return (
-    <div className="mx-auto max-w-2xl">
-      <h1 className="mb-6 text-2xl font-bold">Create {{Name}}</h1>
+    <div className="mx-auto max-w-2xl space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
+          Create {{Name}}
+        </h1>
+        <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+          Fill in the fields below to create a new {{nameKebab}} record.
+        </p>
+      </div>
       <Create{{Name}}Form />
     </div>
   );
@@ -152,95 +191,128 @@ export default function Create{{Name}}Page() {
 
 const CREATE_FORM_TEMPLATE = `'use client';
 
+import Link from 'next/link';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { useToast } from '@/components/feedback/Toast';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import {
+  create{{Name}}HttpClient,
+} from '../adapters/{{nameKebab}}.http';
+import {
+  create{{Name}}FormSchema,
+  type Create{{Name}}ClientInput,
+} from '../schemas/{{nameKebab}}.schema';
 
 export function Create{{Name}}Form() {
   const router = useRouter();
-  const { addToast } = useToast();
-  const [loading, setLoading] = useState(false);
+  const toast = useToast();
+  const httpClient = create{{Name}}HttpClient();
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      const formData = new FormData(e.currentTarget);
-      const body = Object.fromEntries(formData);
-
-      const res = await fetch('/api/{{namePlural}}', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error ?? 'Failed to create');
-      }
-
-      addToast('{{Name}} created successfully', 'success');
-      router.push('/{{namePlural}}');
-      router.refresh();
-    } catch (err) {
-      addToast(err instanceof Error ? err.message : 'An error occurred', 'error');
-    } finally {
-      setLoading(false);
-    }
+  function normalizeOptionalText(value: string): string | undefined {
+    const normalizedValue = value.trim();
+    return normalizedValue.length > 0 ? normalizedValue : undefined;
   }
 
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<Create{{Name}}ClientInput>({
+    resolver: zodResolver(create{{Name}}FormSchema),
+    defaultValues: {
+      name: '',
+    },
+  });
+
+  const onSubmit = handleSubmit(async (values) => {
+    try {
+      await httpClient.create(values);
+      toast.success('{{Name}} created successfully.');
+      router.push('/{{namePluralKebab}}');
+      router.refresh();
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to create {{nameKebab}}.',
+      );
+    }
+  });
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {/* TODO: add form fields */}
-      <div className="flex gap-3">
-        <button
-          type="submit"
-          disabled={loading}
-          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-        >
-          {loading ? 'Creating...' : 'Create'}
-        </button>
-        <a href="/{{namePlural}}" className="rounded-lg border px-4 py-2 text-sm hover:bg-gray-50">
+    <form onSubmit={onSubmit} className="space-y-4" noValidate>
+      <Input
+        label="Name"
+        error={errors.name?.message}
+        placeholder="{{Name}} name"
+        {...register('name')}
+      />
+
+      <div className="space-y-1">
+        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+          Description
+        </label>
+        <textarea
+          className="min-h-32 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-1 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50 dark:focus:ring-zinc-300"
+          placeholder="Describe this {{nameKebab}}"
+          {...register('description', {
+            setValueAs: normalizeOptionalText,
+          })}
+        />
+        {errors.description?.message ? (
+          <p className="text-sm text-red-500">{errors.description.message}</p>
+        ) : null}
+      </div>
+
+      <div className="flex items-center gap-3">
+        <Button type="submit" loading={isSubmitting}>
+          Create {{Name}}
+        </Button>
+        <Link href="/{{namePluralKebab}}" className="text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50">
           Cancel
-        </a>
+        </Link>
       </div>
     </form>
   );
 }
 `;
 
-const EDIT_PAGE_TEMPLATE = `import { cookies } from 'next/headers';
-import { notFound, redirect } from 'next/navigation';
-import { Edit{{Name}}Form } from './Edit{{Name}}Form';
-import { Delete{{Name}}Button } from './Delete{{Name}}Button';
+const EDIT_PAGE_TEMPLATE = `import { requireSession } from '@/server/auth/session';
+import { requirePermission } from '@/server/auth/permissions';
+import {
+  get{{Name}}ById,
+  {{NAME}}_PERMISSIONS,
+} from '@/modules/{{nameKebab}}/server';
+import { Delete{{Name}}Dialog } from '@/modules/{{nameKebab}}/client/components/Delete{{Name}}Dialog';
+import { Edit{{Name}}Form } from '@/modules/{{nameKebab}}/client/forms/Edit{{Name}}Form';
 
-type RouteParams = { params: Promise<{ id: string }> };
-
-async function get{{Name}}(id: string) {
-  const cookieStore = await cookies();
-  const res = await fetch(
-    \`\${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/api/{{namePlural}}/\${id}\`,
-    { headers: { Cookie: cookieStore.toString() }, cache: 'no-store' }
-  );
-
-  if (res.status === 401) redirect('/login');
-  if (res.status === 404) notFound();
-  if (!res.ok) throw new Error('Failed to fetch {{name}}');
-  return res.json();
+interface PageProps {
+  params: Promise<{ id: string }>;
 }
 
-export default async function Edit{{Name}}Page({ params }: RouteParams) {
+export default async function Edit{{Name}}Page({ params }: PageProps) {
+  const session = await requireSession();
+  requirePermission(session, {{NAME}}_PERMISSIONS.UPDATE);
+
   const { id } = await params;
-  const {{name}} = await get{{Name}}(id);
+  const {{nameCamel}} = await get{{Name}}ById(id);
 
   return (
-    <div className="mx-auto max-w-2xl">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Edit {{Name}}</h1>
-        <Delete{{Name}}Button id={id} />
+    <div className="mx-auto max-w-2xl space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
+            Edit {{Name}}
+          </h1>
+          <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+            Update the {{nameKebab}} details and review the change before saving.
+          </p>
+        </div>
+        <Delete{{Name}}Dialog id={{{nameCamel}}.id} />
       </div>
-      <Edit{{Name}}Form {{name}}={ {{name}} } />
+
+      <Edit{{Name}}Form {{nameCamel}}={{{nameCamel}}} />
     </div>
   );
 }
@@ -248,156 +320,263 @@ export default async function Edit{{Name}}Page({ params }: RouteParams) {
 
 const EDIT_FORM_TEMPLATE = `'use client';
 
+import Link from 'next/link';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { useToast } from '@/components/feedback/Toast';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import type { {{Name}}Response } from '../../types/{{nameKebab}}.types';
+import { create{{Name}}HttpClient } from '../adapters/{{nameKebab}}.http';
+import {
+  update{{Name}}FormSchema,
+  type Update{{Name}}ClientInput,
+} from '../schemas/{{nameKebab}}.schema';
 
 interface Edit{{Name}}FormProps {
-  {{name}}: { id: string; [key: string]: unknown };
+  {{nameCamel}}: {{Name}}Response;
 }
 
-export function Edit{{Name}}Form({ {{name}} }: Edit{{Name}}FormProps) {
+export function Edit{{Name}}Form({ {{nameCamel}} }: Edit{{Name}}FormProps) {
   const router = useRouter();
-  const { addToast } = useToast();
-  const [loading, setLoading] = useState(false);
+  const toast = useToast();
+  const httpClient = create{{Name}}HttpClient();
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      const formData = new FormData(e.currentTarget);
-      const body = Object.fromEntries(formData);
-
-      const res = await fetch(\`/api/{{namePlural}}/\${{{name}}.id}\`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error ?? 'Failed to update');
-      }
-
-      addToast('{{Name}} updated successfully', 'success');
-      router.push('/{{namePlural}}');
-      router.refresh();
-    } catch (err) {
-      addToast(err instanceof Error ? err.message : 'An error occurred', 'error');
-    } finally {
-      setLoading(false);
-    }
+  function normalizeOptionalText(value: string): string | undefined {
+    const normalizedValue = value.trim();
+    return normalizedValue.length > 0 ? normalizedValue : undefined;
   }
 
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<Update{{Name}}ClientInput>({
+    resolver: zodResolver(update{{Name}}FormSchema),
+    defaultValues: {
+      name: {{nameCamel}}.name,
+      description: {{nameCamel}}.description ?? undefined,
+    },
+  });
+
+  const onSubmit = handleSubmit(async (values) => {
+    try {
+      await httpClient.update({{nameCamel}}.id, values);
+      toast.success('{{Name}} updated successfully.');
+      router.push('/{{namePluralKebab}}');
+      router.refresh();
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to update {{nameKebab}}.',
+      );
+    }
+  });
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {/* TODO: add form fields with defaultValue from {{name}} */}
-      <div className="flex gap-3">
-        <button
-          type="submit"
-          disabled={loading}
-          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-        >
-          {loading ? 'Saving...' : 'Save Changes'}
-        </button>
-        <a href="/{{namePlural}}" className="rounded-lg border px-4 py-2 text-sm hover:bg-gray-50">
+    <form onSubmit={onSubmit} className="space-y-4" noValidate>
+      <Input
+        label="Name"
+        error={errors.name?.message}
+        placeholder="{{Name}} name"
+        {...register('name')}
+      />
+
+      <div className="space-y-1">
+        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+          Description
+        </label>
+        <textarea
+          className="min-h-32 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-1 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50 dark:focus:ring-zinc-300"
+          placeholder="Describe this {{nameKebab}}"
+          {...register('description', {
+            setValueAs: normalizeOptionalText,
+          })}
+        />
+        {errors.description?.message ? (
+          <p className="text-sm text-red-500">{errors.description.message}</p>
+        ) : null}
+      </div>
+
+      <div className="flex items-center gap-3">
+        <Button type="submit" loading={isSubmitting}>
+          Save changes
+        </Button>
+        <Link href="/{{namePluralKebab}}" className="text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50">
           Cancel
-        </a>
+        </Link>
       </div>
     </form>
   );
 }
 `;
 
-const DELETE_BUTTON_TEMPLATE = `'use client';
+const DELETE_DIALOG_TEMPLATE = `'use client';
 
+import { useId, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/components/feedback/Toast';
+import { Button } from '@/components/ui/Button';
+import { create{{Name}}HttpClient } from '../adapters/{{nameKebab}}.http';
 
-export function Delete{{Name}}Button({ id }: { id: string }) {
+interface Delete{{Name}}DialogProps {
+  id: string;
+}
+
+export function Delete{{Name}}Dialog({ id }: Delete{{Name}}DialogProps) {
   const router = useRouter();
-  const { addToast } = useToast();
+  const toast = useToast();
+  const httpClient = create{{Name}}HttpClient();
+  const [isOpen, setIsOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const titleId = useId();
+  const descriptionId = useId();
 
-  async function handleDelete() {
-    if (!confirm('Are you sure you want to delete this {{name}}?')) return;
+  async function handleDelete(): Promise<void> {
+    setIsDeleting(true);
 
     try {
-      const res = await fetch(\`/api/{{namePlural}}/\${id}\`, { method: 'DELETE' });
-
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error ?? 'Failed to delete');
-      }
-
-      addToast('{{Name}} deleted successfully', 'success');
-      router.push('/{{namePlural}}');
+      await httpClient.remove(id);
+      toast.success('{{Name}} deleted successfully.');
+      router.push('/{{namePluralKebab}}');
       router.refresh();
-    } catch (err) {
-      addToast(err instanceof Error ? err.message : 'An error occurred', 'error');
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to delete {{nameKebab}}.',
+      );
+    } finally {
+      setIsDeleting(false);
+      setIsOpen(false);
     }
   }
 
   return (
-    <button
-      onClick={handleDelete}
-      className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
-    >
-      Delete
-    </button>
+    <>
+      <Button type="button" variant="danger" onClick={() => setIsOpen(true)}>
+        Delete
+      </Button>
+
+      {isOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/60 p-4">
+          <div
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby={titleId}
+            aria-describedby={descriptionId}
+            className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-zinc-950"
+          >
+            <h2 id={titleId} className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+              Delete {{Name}}
+            </h2>
+            <p id={descriptionId} className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+              This action permanently removes the {{nameKebab}} record. Review it carefully before continuing.
+            </p>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={isDeleting}
+                onClick={() => setIsOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                variant="danger"
+                loading={isDeleting}
+                onClick={() => void handleDelete()}
+              >
+                Delete {{Name}}
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </>
   );
 }
 `;
 
-export async function generateFrontendCrud(name: string): Promise<void> {
+const CLIENT_INDEX_CRUD_FRAGMENT = `export { Delete{{Name}}Dialog } from './components/Delete{{Name}}Dialog';
+export { Create{{Name}}Form } from './forms/Create{{Name}}Form';
+export { Edit{{Name}}Form } from './forms/Edit{{Name}}Form';
+`;
+
+export async function generateFrontendCrud(
+  name: string,
+  options: GeneratorLayoutOptions = {},
+): Promise<void> {
   const vars = createVariables(name);
   const root = resolveProjectRoot();
-  const pagesDir = path.join(root, 'src', 'app', '(dashboard)', vars.namePlural);
+  const pagesDir = path.join(root, "src", "app", "(dashboard)", vars.namePluralKebab);
+  const moduleDir = path.join(root, "src", "modules", vars.nameKebab, "client");
 
-  console.log(`\nGenerating frontend CRUD for: ${name}\n`);
+  console.log(`\nGenerating frontend CRUD for: ${vars.nameKebab}\n`);
 
-  // Generate the module (types, schemas, index)
-  await generateFrontendModule(name);
+  await generateFrontendModule(name, options);
 
-  // List page
+  await Promise.all([
+    ensureDir(pagesDir),
+    ensureDir(path.join(moduleDir, "components")),
+    ensureDir(path.join(moduleDir, "forms")),
+  ]);
+
   await ensureDir(pagesDir);
+  await writeFileSafe(path.join(pagesDir, "page.tsx"), renderTemplate(LIST_PAGE_TEMPLATE, vars));
   await writeFileSafe(
-    path.join(pagesDir, 'page.tsx'),
-    renderTemplate(LIST_PAGE_TEMPLATE, vars)
-  );
-  await writeFileSafe(
-    path.join(pagesDir, `${vars.Name}sTable.tsx`),
-    renderTemplate(LIST_TABLE_TEMPLATE, vars)
+    path.join(pagesDir, `${vars.NamePlural}Table.tsx`),
+    renderTemplate(LIST_TABLE_TEMPLATE, vars),
   );
 
-  // Create page
-  const createDir = path.join(pagesDir, 'create');
+  const createDir = path.join(pagesDir, "create");
   await ensureDir(createDir);
+  await writeFileSafe(path.join(createDir, "page.tsx"), renderTemplate(CREATE_PAGE_TEMPLATE, vars));
   await writeFileSafe(
-    path.join(createDir, 'page.tsx'),
-    renderTemplate(CREATE_PAGE_TEMPLATE, vars)
-  );
-  await writeFileSafe(
-    path.join(createDir, `Create${vars.Name}Form.tsx`),
-    renderTemplate(CREATE_FORM_TEMPLATE, vars)
+    path.join(moduleDir, "forms", `Create${vars.Name}Form.tsx`),
+    renderTemplate(CREATE_FORM_TEMPLATE, vars),
   );
 
-  // Edit page
-  const editDir = path.join(pagesDir, '[id]');
+  const editDir = path.join(pagesDir, "[id]");
   await ensureDir(editDir);
+  await writeFileSafe(path.join(editDir, "page.tsx"), renderTemplate(EDIT_PAGE_TEMPLATE, vars));
   await writeFileSafe(
-    path.join(editDir, 'page.tsx'),
-    renderTemplate(EDIT_PAGE_TEMPLATE, vars)
+    path.join(moduleDir, "forms", `Edit${vars.Name}Form.tsx`),
+    renderTemplate(EDIT_FORM_TEMPLATE, vars),
   );
   await writeFileSafe(
-    path.join(editDir, `Edit${vars.Name}Form.tsx`),
-    renderTemplate(EDIT_FORM_TEMPLATE, vars)
+    path.join(moduleDir, "components", `Delete${vars.Name}Dialog.tsx`),
+    renderTemplate(DELETE_DIALOG_TEMPLATE, vars),
   );
   await writeFileSafe(
-    path.join(editDir, `Delete${vars.Name}Button.tsx`),
-    renderTemplate(DELETE_BUTTON_TEMPLATE, vars)
+    path.join(moduleDir, "index.ts"),
+    renderTemplate(
+      `export {
+  create{{Name}}FormSchema,
+  paginated{{NamePlural}}Schema,
+  search{{NamePlural}}FilterSchema,
+  update{{Name}}FormSchema,
+  {{nameCamel}}ResponseSchema,
+} from './schemas/{{nameKebab}}.schema';
+export type {
+  Create{{Name}}ClientInput,
+  Search{{NamePlural}}Filters,
+  Update{{Name}}ClientInput,
+} from './schemas/{{nameKebab}}.schema';
+export {
+  create{{Name}}HttpClient,
+  type {{Name}}HttpClient,
+} from './adapters/{{nameKebab}}.http';
+export type { {{Name}}ListItem, {{Name}}Response } from '../types/{{nameKebab}}.types';
+
+/* FRAGMENT:forms-components */
+${CLIENT_INDEX_CRUD_FRAGMENT}
+/* END FRAGMENT:forms-components */
+`,
+      vars,
+    ),
   );
 
-  console.log(`\nFrontend CRUD for "${name}" generated successfully.`);
-  console.log(`  Pages: src/app/(dashboard)/${vars.namePlural}/`);
+  console.log(`\nFrontend CRUD for "${vars.nameKebab}" generated successfully.`);
+  console.log(`  Pages: src/app/(dashboard)/${vars.namePluralKebab}/`);
 }

@@ -1,12 +1,16 @@
-import { hash } from 'bcryptjs';
-import { prisma } from '@/server/db/prisma';
-import { createAuditLog } from '@/server/middleware/audit-log';
-import { cacheDel, cacheDelPattern } from '@/server/cache/redis';
-import { AUDIT_ACTIONS } from '@/lib/constants';
-import { paginate, type PaginatedResponse } from '@/lib/query/pagination';
-import { buildUserQuery } from '../queries/user.query';
-import type { CreateUserInput, UpdateUserInput, SearchUserInput } from '../schemas/user.schema';
-import type { UserResponse } from '../dto/user-response.dto';
+import { hash } from "bcryptjs";
+import { prisma } from "@/server/db/prisma";
+import { createAuditLog } from "@/server/middleware/audit-log";
+import { cacheDel, cacheDelPattern } from "@/server/cache/redis";
+import { AUDIT_ACTIONS } from "@/lib/constants";
+import { paginate, type PaginatedResponse } from "@/lib/query/pagination";
+import { buildUserQuery } from "../queries/user.query";
+import type {
+  CreateUserInput,
+  UpdateUserInput,
+  SearchUserInput,
+} from "../schemas/user.schema";
+import type { UserResponse } from "../dto/user-response.dto";
 
 function toResponse(user: {
   id: string;
@@ -28,7 +32,9 @@ function toResponse(user: {
   };
 }
 
-export async function listUsers(params: SearchUserInput): Promise<PaginatedResponse<UserResponse>> {
+export async function listUsers(
+  params: SearchUserInput,
+): Promise<PaginatedResponse<UserResponse>> {
   const query = buildUserQuery(params);
 
   const [users, total] = await Promise.all([
@@ -51,14 +57,19 @@ export async function getUserById(id: string): Promise<UserResponse> {
     include: { role: true },
   });
 
-  if (!user) throw new Error('Not found');
+  if (!user) throw new Error("Not found");
 
   return toResponse(user);
 }
 
-export async function createUser(input: CreateUserInput, actorId: string): Promise<UserResponse> {
-  const exists = await prisma.user.findUnique({ where: { email: input.email } });
-  if (exists) throw new Error('Email already registered');
+export async function createUser(
+  input: CreateUserInput,
+  actorId: string,
+): Promise<UserResponse> {
+  const exists = await prisma.user.findUnique({
+    where: { email: input.email },
+  });
+  if (exists) throw new Error("Email already registered");
 
   const hashedPassword = await hash(input.password, 12);
 
@@ -79,17 +90,21 @@ export async function createUser(input: CreateUserInput, actorId: string): Promi
   await createAuditLog({
     userId: actorId,
     action: AUDIT_ACTIONS.USER_CREATED,
-    entity: 'user',
+    entity: "user",
     entityId: user.id,
     metadata: { name: user.name, email: user.email },
   });
 
-  await cacheDelPattern('users:*');
+  await cacheDelPattern("users:*");
 
   return toResponse(user);
 }
 
-export async function updateUser(id: string, input: UpdateUserInput, actorId: string): Promise<UserResponse> {
+export async function updateUser(
+  id: string,
+  input: UpdateUserInput,
+  actorId: string,
+): Promise<UserResponse> {
   const data: Record<string, unknown> = { ...input };
 
   if (input.password) {
@@ -109,13 +124,13 @@ export async function updateUser(id: string, input: UpdateUserInput, actorId: st
   await createAuditLog({
     userId: actorId,
     action: AUDIT_ACTIONS.USER_UPDATED,
-    entity: 'user',
+    entity: "user",
     entityId: user.id,
     metadata: { fields: Object.keys(input) },
   });
 
   await cacheDel(`users:${id}`);
-  await cacheDelPattern('users:list:*');
+  await cacheDelPattern("users:list:*");
 
   return toResponse(user);
 }
@@ -131,10 +146,10 @@ export async function deleteUser(id: string, actorId: string): Promise<void> {
   await createAuditLog({
     userId: actorId,
     action: AUDIT_ACTIONS.USER_DELETED,
-    entity: 'user',
+    entity: "user",
     entityId: id,
   });
 
   await cacheDel(`users:${id}`);
-  await cacheDelPattern('users:list:*');
+  await cacheDelPattern("users:list:*");
 }

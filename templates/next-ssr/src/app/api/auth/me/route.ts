@@ -1,7 +1,7 @@
-import { NextResponse } from 'next/server';
-import { requireSession } from '@/server/auth/session';
-import { getCurrentUser } from '@/modules/auth/services/auth.service';
-import { handleApiError } from '@/server/middleware/error-handler';
+import { NextResponse } from "next/server";
+import { requireSession } from "@/server/auth/session";
+import { getCurrentUser } from "@/modules/auth/services/auth.service";
+import { handleApiError } from "@/server/middleware/error-handler";
 
 export async function GET() {
   try {

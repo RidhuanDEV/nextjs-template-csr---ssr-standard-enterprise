@@ -1,6 +1,6 @@
-import type { QueryParams } from './query-parser';
+import type { QueryParams } from "./query-parser";
 
-type SortDirection = 'asc' | 'desc';
+type SortDirection = "asc" | "desc";
 
 interface SortConfig {
   field: string;
@@ -24,7 +24,7 @@ export class QueryBuilder {
     this.params = params;
     this.searchFields = [];
     this.allowedSortFields = [];
-    this.defaultSort = { field: 'createdAt', direction: 'desc' };
+    this.defaultSort = { field: "createdAt", direction: "desc" };
   }
 
   withSearch(fields: string[]): this {
@@ -50,12 +50,14 @@ export class QueryBuilder {
       }));
     }
 
-    let orderBy: Record<string, SortDirection> = { [this.defaultSort.field]: this.defaultSort.direction };
+    let orderBy: Record<string, SortDirection> = {
+      [this.defaultSort.field]: this.defaultSort.direction,
+    };
 
     if (this.params.sort) {
-      const isDesc = this.params.sort.startsWith('-');
+      const isDesc = this.params.sort.startsWith("-");
       const field = isDesc ? this.params.sort.slice(1) : this.params.sort;
-      const direction: SortDirection = isDesc ? 'desc' : 'asc';
+      const direction: SortDirection = isDesc ? "desc" : "asc";
 
       if (this.allowedSortFields.includes(field)) {
         orderBy = { [field]: direction };

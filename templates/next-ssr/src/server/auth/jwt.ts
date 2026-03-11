@@ -1,6 +1,8 @@
-import { SignJWT, jwtVerify } from 'jose';
+import { SignJWT, jwtVerify } from "jose";
 
-const secret = new TextEncoder().encode(process.env.JWT_SECRET ?? 'fallback-dev-secret');
+const secret = new TextEncoder().encode(
+  process.env.JWT_SECRET ?? "fallback-dev-secret",
+);
 
 export interface JwtPayload {
   sub: string;
@@ -11,9 +13,9 @@ export interface JwtPayload {
 
 export async function signToken(payload: JwtPayload): Promise<string> {
   return new SignJWT({ ...payload } as Record<string, unknown>)
-    .setProtectedHeader({ alg: 'HS256' })
+    .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
-    .setExpirationTime('7d')
+    .setExpirationTime("7d")
     .sign(secret);
 }
 

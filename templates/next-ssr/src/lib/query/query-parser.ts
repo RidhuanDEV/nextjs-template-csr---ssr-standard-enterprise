@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 export const queryParamsSchema = z.object({
   page: z.coerce.number().int().positive().default(1),
@@ -11,9 +11,9 @@ export type QueryParams = z.infer<typeof queryParamsSchema>;
 
 export function parseQueryParams(searchParams: URLSearchParams): QueryParams {
   return queryParamsSchema.parse({
-    page: searchParams.get('page') ?? undefined,
-    limit: searchParams.get('limit') ?? undefined,
-    search: searchParams.get('search') ?? undefined,
-    sort: searchParams.get('sort') ?? undefined,
+    page: searchParams.get("page") ?? undefined,
+    limit: searchParams.get("limit") ?? undefined,
+    search: searchParams.get("search") ?? undefined,
+    sort: searchParams.get("sort") ?? undefined,
   });
 }

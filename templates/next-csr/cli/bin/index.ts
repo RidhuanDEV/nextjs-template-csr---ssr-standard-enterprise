@@ -2,14 +2,16 @@
 
 import { Command } from 'commander';
 import { registerGenerateCommand } from '../src/commands/generate.js';
+import { registerAuditCommand } from '../src/commands/audit.js';
 
 const program = new Command();
 
 program
-  .name('generate-cli')
-  .description('Project generator for CSR template')
+  .name('csr-cli')
+  .description('Enterprise-grade CLI generator for CSR template')
   .version('1.0.0');
 
 registerGenerateCommand(program);
+registerAuditCommand(program);
 
 program.parse();

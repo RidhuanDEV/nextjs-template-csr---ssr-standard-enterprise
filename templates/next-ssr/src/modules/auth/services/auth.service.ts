@@ -1,28 +1,30 @@
-import { hash, compare } from 'bcryptjs';
-import { prisma } from '@/server/db/prisma';
-import { signToken, type JwtPayload } from '@/server/auth/jwt';
-import { createAuditLog } from '@/server/middleware/audit-log';
-import { AUDIT_ACTIONS } from '@/lib/constants';
-import type { LoginInput, RegisterInput } from '../schemas/auth.schema';
-import type { AuthUser } from '../types/auth.types';
+import { hash, compare } from "bcryptjs";
+import { prisma } from "@/server/db/prisma";
+import { signToken, type JwtPayload } from "@/server/auth/jwt";
+import { createAuditLog } from "@/server/middleware/audit-log";
+import { AUDIT_ACTIONS } from "@/lib/constants";
+import type { LoginInput, RegisterInput } from "../schemas/auth.schema";
+import type { AuthUser } from "../types/auth.types";
 
-export async function loginUser(input: LoginInput): Promise<{ user: AuthUser; token: string }> {
+export async function loginUser(
+  input: LoginInput,
+): Promise<{ user: AuthUser; token: string }> {
   const user = await prisma.user.findUnique({
     where: { email: input.email },
     include: { role: { include: { permissions: { select: { key: true } } } } },
   });
 
   if (!user || user.deletedAt) {
-    throw new Error('Invalid credentials');
+    throw new Error("Invalid credentials");
   }
 
   const valid = await compare(input.password, user.password);
   if (!valid) {
-    throw new Error('Invalid credentials');
+    throw new Error("Invalid credentials");
   }
 
   if (!user.isActive) {
-    throw new Error('Account is deactivated');
+    throw new Error("Account is deactivated");
   }
 
   const permissions = user.role.permissions.map((p) => p.key);
@@ -39,7 +41,7 @@ export async function loginUser(input: LoginInput): Promise<{ user: AuthUser; to
   await createAuditLog({
     userId: user.id,
     action: AUDIT_ACTIONS.USER_LOGIN,
-    entity: 'user',
+    entity: "user",
     entityId: user.id,
   });
 
@@ -55,15 +57,19 @@ export async function loginUser(input: LoginInput): Promise<{ user: AuthUser; to
   };
 }
 
-export async function registerUser(input: RegisterInput): Promise<{ user: AuthUser; token: string }> {
-  const exists = await prisma.user.findUnique({ where: { email: input.email } });
+export async function registerUser(
+  input: RegisterInput,
+): Promise<{ user: AuthUser; token: string }> {
+  const exists = await prisma.user.findUnique({
+    where: { email: input.email },
+  });
   if (exists) {
-    throw new Error('Email already registered');
+    throw new Error("Email already registered");
   }
 
-  const defaultRole = await prisma.role.findUnique({ where: { name: 'user' } });
+  const defaultRole = await prisma.role.findUnique({ where: { name: "user" } });
   if (!defaultRole) {
-    throw new Error('Default role not found. Run seed first.');
+    throw new Error("Default role not found. Run seed first.");
   }
 
   const hashedPassword = await hash(input.password, 12);
@@ -92,7 +98,7 @@ export async function registerUser(input: RegisterInput): Promise<{ user: AuthUs
   await createAuditLog({
     userId: user.id,
     action: AUDIT_ACTIONS.USER_REGISTER,
-    entity: 'user',
+    entity: "user",
     entityId: user.id,
   });
 
@@ -115,7 +121,7 @@ export async function getCurrentUser(userId: string): Promise<AuthUser> {
   });
 
   if (!user) {
-    throw new Error('Not found');
+    throw new Error("Not found");
   }
 
   const permissions = user.role.permissions.map((p) => p.key);

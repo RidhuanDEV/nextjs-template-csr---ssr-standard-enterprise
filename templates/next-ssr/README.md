@@ -6,20 +6,20 @@ A production-ready **Server-Side Rendering + fullstack** template built with Nex
 
 ## Tech Stack
 
-| Package | Version | Purpose |
-|---|---|---|
-| Next.js | 16.x | Framework + API Routes |
-| React | 19.x | UI Library |
-| TypeScript | 5.x | Type Safety |
-| Tailwind CSS | 4.x | Styling |
-| Prisma | 7.x | ORM |
-| MariaDB / MySQL | 8+ | Database |
-| Redis | 7+ | Cache + Rate Limiting |
-| BullMQ | 5.x | Background Jobs |
-| Pino | 10.x | Structured Logging |
-| Zod | 4.x | Schema + Env Validation |
-| jose | 6.x | JWT (Edge-compatible) |
-| bcryptjs | 3.x | Password Hashing |
+| Package         | Version | Purpose                 |
+| --------------- | ------- | ----------------------- |
+| Next.js         | 16.x    | Framework + API Routes  |
+| React           | 19.x    | UI Library              |
+| TypeScript      | 5.x     | Type Safety             |
+| Tailwind CSS    | 4.x     | Styling                 |
+| Prisma          | 7.x     | ORM                     |
+| MariaDB / MySQL | 8+      | Database                |
+| Redis           | 7+      | Cache + Rate Limiting   |
+| BullMQ          | 5.x     | Background Jobs         |
+| Pino            | 10.x    | Structured Logging      |
+| Zod             | 4.x     | Schema + Env Validation |
+| jose            | 6.x     | JWT (Edge-compatible)   |
+| bcryptjs        | 3.x     | Password Hashing        |
 
 ---
 
@@ -65,6 +65,7 @@ npm run dev
 Open [http://localhost:3000](http://localhost:3000).
 
 **Default credentials after seeding:**
+
 - Email: `admin@example.com`
 - Password: `password123`
 
@@ -96,10 +97,14 @@ All variables are validated at startup using Zod. Missing or invalid values will
 ## Available Scripts
 
 ```bash
+npm run cli:build     # Compile cli/ to cli/dist for node execution
 npm run dev           # Start dev server with Turbopack
 npm run build         # Production build
 npm run start         # Start production server
-npm run lint          # Run ESLint
+npm run typecheck     # Run TypeScript strict compilation
+npm run lint          # Run ESLint for src/ and cli/
+npm run lint:fix      # Auto-fix lint issues where possible
+npm run test          # Run Vitest once
 
 npm run db:generate   # Generate Prisma client
 npm run db:migrate    # Run database migrations (dev)
@@ -145,7 +150,11 @@ src/
 ├── modules/                    # Feature modules
 │   ├── auth/                   # Auth schemas, services, types
 │   ├── user/                   # User DTO, queries, schemas, services
-│   └── role/                   # Role DTO, queries, schemas, services
+│   ├── role/                   # Role DTO, queries, schemas, services
+│   └── <resource>/             # Generated CRUD modules
+│       ├── client/             # Forms, adapters, client schemas, components
+│       ├── server/             # Services, dto, queries, permissions, events
+│       └── types/              # Shared response/entity types
 │
 ├── server/                     # Server-only utilities
 │   ├── auth/                   # JWT helpers, session management, permissions
@@ -175,31 +184,31 @@ src/
 
 ### Default Roles & Permissions
 
-| Role | Permissions |
-|---|---|
+| Role    | Permissions                                                                                    |
+| ------- | ---------------------------------------------------------------------------------------------- |
 | `admin` | All permissions (users:read, users:write, users:delete, roles:read, roles:write, roles:delete) |
-| `user` | users:read |
+| `user`  | users:read                                                                                     |
 
 ---
 
 ## API Routes
 
-| Method | Path | Auth | Description |
-|---|---|---|---|
-| POST | `/api/auth/login` | Public | Login, get JWT cookie |
-| POST | `/api/auth/register` | Public | Register new user |
-| GET | `/api/auth/me` | Auth | Current user info |
-| POST | `/api/auth/logout` | Auth | Clear JWT cookie |
-| GET | `/api/users` | Auth + Permission | List users (paginated) |
-| POST | `/api/users` | Auth + Permission | Create user |
-| GET | `/api/users/:id` | Auth + Permission | Get user by ID |
-| PATCH | `/api/users/:id` | Auth + Permission | Update user |
-| DELETE | `/api/users/:id` | Auth + Permission | Delete user |
-| GET | `/api/roles` | Auth + Permission | List roles |
-| POST | `/api/roles` | Auth + Permission | Create role |
-| GET | `/api/roles/:id` | Auth + Permission | Get role by ID |
-| PATCH | `/api/roles/:id` | Auth + Permission | Update role |
-| DELETE | `/api/roles/:id` | Auth + Permission | Delete role |
+| Method | Path                 | Auth              | Description            |
+| ------ | -------------------- | ----------------- | ---------------------- |
+| POST   | `/api/auth/login`    | Public            | Login, get JWT cookie  |
+| POST   | `/api/auth/register` | Public            | Register new user      |
+| GET    | `/api/auth/me`       | Auth              | Current user info      |
+| POST   | `/api/auth/logout`   | Auth              | Clear JWT cookie       |
+| GET    | `/api/users`         | Auth + Permission | List users (paginated) |
+| POST   | `/api/users`         | Auth + Permission | Create user            |
+| GET    | `/api/users/:id`     | Auth + Permission | Get user by ID         |
+| PATCH  | `/api/users/:id`     | Auth + Permission | Update user            |
+| DELETE | `/api/users/:id`     | Auth + Permission | Delete user            |
+| GET    | `/api/roles`         | Auth + Permission | List roles             |
+| POST   | `/api/roles`         | Auth + Permission | Create role            |
+| GET    | `/api/roles/:id`     | Auth + Permission | Get role by ID         |
+| PATCH  | `/api/roles/:id`     | Auth + Permission | Update role            |
+| DELETE | `/api/roles/:id`     | Auth + Permission | Delete role            |
 
 ---
 
@@ -251,10 +260,13 @@ model AuditLog {
 The queue is configured in `src/server/queue/index.ts`. Add new jobs:
 
 ```typescript
-import { appQueue } from '@/server/queue';
+import { appQueue } from "@/server/queue";
 
 // Enqueue a job
-await appQueue.add('send-email', { to: 'user@example.com', subject: 'Welcome' });
+await appQueue.add("send-email", {
+  to: "user@example.com",
+  subject: "Welcome",
+});
 ```
 
 Add a worker in the same file to process jobs.
@@ -278,38 +290,79 @@ Rate limiting is applied in API routes using Redis via `server/middleware/rate-l
 Each project has its own `cli/` directory. From the project root:
 
 ```bash
-# Generate a frontend module (page + components + hooks)
-npx tsx cli/bin/index.ts generate frontend:module
+# Development mode (no build step required)
+npx tsx cli/bin/index.ts generate module product
 
-# Generate a UI component
-npx tsx cli/bin/index.ts generate frontend:component
+# Compile once, then use the dist entrypoint
+npm run cli:build
+node cli/dist/index.js generate crud product
 
-# Generate frontend CRUD pages (list + create + edit + delete)
-npx tsx cli/bin/index.ts generate frontend:crud
+# Generate a client component inside an existing module
+npx tsx cli/bin/index.ts generate component ProductSummaryCard --dir product
 
-# Generate a backend module (service + schema + DTO)
-npx tsx cli/bin/index.ts generate backend:module
+# Generate only the server or client side
+npx tsx cli/bin/index.ts generate backend module product
+npx tsx cli/bin/index.ts generate frontend module product
 
-# Generate backend CRUD (service + API routes + queries)
-npx tsx cli/bin/index.ts generate backend:crud
-
-# Generate both frontend + backend CRUD at once
-npx tsx cli/bin/index.ts generate fullstack:crud
+# Opt into a shared merged schema file under src/modules/<name>/schemas
+npx tsx cli/bin/index.ts generate crud product --merge
 ```
 
-The generator prompts for the resource name and scaffolds files in the correct directories.
+By default the generator emits a split enterprise layout:
+
+```text
+src/modules/product/
+├── client/
+│   ├── adapters/
+│   ├── components/
+│   ├── forms/
+│   ├── schemas/
+│   └── tests/
+├── server/
+│   ├── constants/
+│   ├── dto/
+│   ├── queries/
+│   ├── schemas/
+│   ├── services/
+│   ├── testing/
+│   └── tests/
+└── types/
+```
+
+Server pages call services directly. Browser forms use a typed HTTP adapter and Zod validation.
 
 ---
 
-## Adding a New Resource Manually
+## Generated CRUD Migration Workflow
 
-1. Define the Prisma model in `prisma/schema.prisma`
-2. Run `npm run db:migrate`
-3. Create `src/modules/<name>/` with: `dto/`, `queries/`, `schemas/`, `services/`, `types/`
-4. Add API routes in `src/app/api/<name>/route.ts` and `src/app/api/<name>/[id]/route.ts`
-5. Create dashboard pages in `src/app/(dashboard)/<name>/`
-6. Add permission keys in `src/lib/constants/permissions.ts`
-7. Assign permissions to roles in `prisma/seed.ts`
+Use this checklist after running `generate crud <name>`:
+
+```bash
+# 1. Build the CLI when you want to execute the compiled entrypoint
+npm run cli:build
+
+# 2. Generate the module
+node cli/dist/index.js generate crud product
+
+# 3. Add the Prisma model and then run the migration
+npm run db:migrate -- --name add-products
+
+# 4. Refresh Prisma client types
+npm run db:generate
+
+# 5. Validate the whole workspace
+npm run typecheck
+npm run lint
+npm run test
+```
+
+Then complete the remaining integration work:
+
+1. Add the new Prisma model to `prisma/schema.prisma`
+2. Seed or assign the generated permission constants from `src/modules/<name>/server/constants/<name>.permissions.ts`
+3. Add a sidebar entry to `src/components/layout/Sidebar.tsx`
+4. Review any generated `.gen-conflict` files before deleting them
+5. Replace the starter fields (`name`, `description`) if your domain needs different attributes
 
 ---
 

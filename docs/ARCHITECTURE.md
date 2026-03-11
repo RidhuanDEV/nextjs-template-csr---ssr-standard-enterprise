@@ -70,23 +70,27 @@ src/
 ## Layer Responsibilities
 
 ### `app/` — Routing Layer
+
 - Contains **only** Next.js page files and route layouts
 - Pages are thin — they compose module components
 - Route groups `(auth)` and `(dashboard)` define layout boundaries
 - No business logic lives here
 
 ### `modules/` — Feature Domain Layer
+
 - Each feature is a self-contained module with its own components, hooks, services, schemas, and types
 - Modules communicate through well-defined interfaces (barrel exports via `index.ts`)
 - Cross-module imports should go through the barrel export, never reach into internal files
 - New features = new module folder
 
 ### `lib/` — Infrastructure Layer
+
 - Framework-level code that is feature-agnostic
 - API client, query configuration, env validation, RBAC utilities
 - Owned by platform/infra team, rarely changes after initial setup
 
 ### `components/` — Shared UI Layer
+
 - Reusable components shared across multiple modules
 - `ui/` contains atomic primitives (no business logic)
 - `layout/` contains structural components
@@ -94,24 +98,29 @@ src/
 - `guards/` contains route protection components
 
 ### `store/` — Global State Layer
+
 - Zustand stores for cross-cutting state (auth, toast)
 - Feature-specific state should live inside the module, not here
 - Persisted state uses Zustand persist middleware with localStorage
 
 ### `providers/` — Provider Composition Layer
+
 - Wraps the app with necessary React contexts
 - `AppProviders` is the composition root used in root layout
 - Add new providers here as needed (theme, feature flags, etc.)
 
 ### `hooks/` — Shared Hooks Layer
+
 - Hooks used across multiple modules
 - Module-specific hooks belong inside the module
 
 ### `types/` — Global Type Layer
+
 - Shared TypeScript types, role/permission enums
 - Module-specific types belong inside the module
 
 ### `utils/` — Utility Layer
+
 - Pure functions with no side effects
 - Things like class name merging, date formatting, etc.
 
@@ -120,24 +129,28 @@ src/
 ## Key Design Decisions
 
 ### Why CSR with Next.js App Router?
+
 - The backend is a separate JWT-authenticated service — no SSR data fetching needed
 - React Query manages server state with caching, deduplication, and optimistic updates
 - App Router provides file-based routing, layouts, and route groups without requiring SSR
 - Team gets the DX benefits of Next.js while keeping a CSR architecture
 
 ### Why Modular Feature Architecture?
+
 - 10 developers can work on different modules simultaneously without merge conflicts
 - Clear ownership boundaries — each module has a single team/owner
 - Features can be added/removed without affecting other parts of the app
 - Consistent internal structure makes onboarding fast
 
 ### Why Zustand over Context?
+
 - Zustand stores are accessible outside React (e.g., in Axios interceptors)
 - No provider nesting required — simpler component tree
 - Built-in persist middleware for localStorage
 - Minimal boilerplate compared to Redux
 
 ### Why Barrel Exports?
+
 - Modules expose a clean public API via `index.ts`
 - Internal refactoring doesn't break consumers
 - IDE auto-imports resolve to the barrel, keeping imports clean
@@ -184,13 +197,13 @@ if (hasPermission(user, 'users:delete')) { /* ... */ }
 
 ## Error Handling Strategy
 
-| Layer | Mechanism | Purpose |
-|-------|-----------|---------|
-| Global | ErrorBoundary in AppProviders | Catches unhandled React errors |
-| API | Axios response interceptor | Global 401/error toast handling |
-| Mutation | React Query onError | Per-mutation error handling |
-| Form | Zod + react-hook-form | Client-side validation |
-| Environment | Zod env validation | Fail-fast on misconfiguration |
+| Layer       | Mechanism                     | Purpose                         |
+| ----------- | ----------------------------- | ------------------------------- |
+| Global      | ErrorBoundary in AppProviders | Catches unhandled React errors  |
+| API         | Axios response interceptor    | Global 401/error toast handling |
+| Mutation    | React Query onError           | Per-mutation error handling     |
+| Form        | Zod + react-hook-form         | Client-side validation          |
+| Environment | Zod env validation            | Fail-fast on misconfiguration   |
 
 ---
 
@@ -203,6 +216,7 @@ if (hasPermission(user, 'users:delete')) { /* ... */ }
 5. Add nav item in `Sidebar.tsx` if needed
 
 Or use the CLI generator:
+
 ```bash
 npx frontend-cli generate module <name>
 ```
@@ -213,23 +227,23 @@ npx frontend-cli generate module <name>
 
 ### What Should Be Generated?
 
-| Artifact | Why Generate? |
-|----------|--------------|
+| Artifact           | Why Generate?                                                                                                                                                                         |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Feature Module** | Consistent structure across 10+ developers. Every module needs the same folders (components, hooks, schemas, services, types) and an index.ts barrel. Manual creation leads to drift. |
-| **Service** | Every API service follows the same pattern: import apiClient, define typed methods, return response.data. Boilerplate that should be scaffolded. |
-| **Hook** | Query/mutation hooks follow a predictable pattern: import service + types, return useQuery/useMutation with standard options. |
-| **Component** | Every component needs 'use client', proper imports, typed props interface. Enforcing this structure via generator prevents inconsistency. |
-| **CRUD Pages** | CRUD is the most common pattern in business apps. A list page, create form, edit form, and detail view follow near-identical patterns. Generating these saves hours per feature. |
-| **Zod Schema** | Schemas follow a pattern: define fields, export type inference. Generating these ensures consistent validation approach. |
+| **Service**        | Every API service follows the same pattern: import apiClient, define typed methods, return response.data. Boilerplate that should be scaffolded.                                      |
+| **Hook**           | Query/mutation hooks follow a predictable pattern: import service + types, return useQuery/useMutation with standard options.                                                         |
+| **Component**      | Every component needs 'use client', proper imports, typed props interface. Enforcing this structure via generator prevents inconsistency.                                             |
+| **CRUD Pages**     | CRUD is the most common pattern in business apps. A list page, create form, edit form, and detail view follow near-identical patterns. Generating these saves hours per feature.      |
+| **Zod Schema**     | Schemas follow a pattern: define fields, export type inference. Generating these ensures consistent validation approach.                                                              |
 
 ### What Should NOT Be Generated?
 
-| Artifact | Why Not? |
-|----------|----------|
-| **lib/ infrastructure** | Created once, rarely changes. Not worth generating. |
-| **store/** | Global stores are few and unique. No repeating pattern. |
-| **UI components** | Primitives are handcrafted for design consistency. |
-| **providers/** | Created once during project setup. |
+| Artifact                | Why Not?                                                |
+| ----------------------- | ------------------------------------------------------- |
+| **lib/ infrastructure** | Created once, rarely changes. Not worth generating.     |
+| **store/**              | Global stores are few and unique. No repeating pattern. |
+| **UI components**       | Primitives are handcrafted for design consistency.      |
+| **providers/**          | Created once during project setup.                      |
 
 ### Consistency Rules Enforced by Generator
 
@@ -282,12 +296,12 @@ cli/
 
 ### Command Reference
 
-| Command | Description |
-|---------|-------------|
-| `frontend-cli create <name>` | Scaffold a new project from the CSR template |
-| `frontend-cli generate module <name>` | Generate a feature module with standard structure |
-| `frontend-cli generate component <Name>` | Generate a typed React component |
-| `frontend-cli generate crud <name>` | Generate full CRUD pages + module for a resource |
+| Command                                  | Description                                       |
+| ---------------------------------------- | ------------------------------------------------- |
+| `frontend-cli create <name>`             | Scaffold a new project from the CSR template      |
+| `frontend-cli generate module <name>`    | Generate a feature module with standard structure |
+| `frontend-cli generate component <Name>` | Generate a typed React component                  |
+| `frontend-cli generate crud <name>`      | Generate full CRUD pages + module for a resource  |
 
 ### Design Principles
 

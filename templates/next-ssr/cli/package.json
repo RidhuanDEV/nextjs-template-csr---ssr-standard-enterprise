@@ -1,0 +1,6 @@
+{
+  "name": "next-ssr-cli",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js"
+}

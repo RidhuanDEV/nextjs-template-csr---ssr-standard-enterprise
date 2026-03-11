@@ -1,15 +1,15 @@
-# Next.js Template Collection
+# Next.js Enterprise Template Platform
 
-A monorepo of production-ready **Next.js templates** for frontend and fullstack projects. Pick the template that fits your architecture, then use the built-in CLI to scaffold new modules and CRUD features without boilerplate.
+A monorepo of **production-ready Next.js templates** with enterprise-grade code generators. Create a new project, scaffold modules, CRUD pages, and audit quality — all from the CLI.
 
 ---
 
 ## Available Templates
 
-| Template | Path | Description |
-|---|---|---|
-| **next-csr** | `templates/next-csr/` | Client-Side Rendering — React + Zustand + TanStack Query. Best for SPAs that connect to a separate API server. |
-| **next-ssr** | `templates/next-ssr/` | Fullstack SSR — Next.js API routes + Prisma (MySQL) + Redis + BullMQ + RBAC + Audit Logging. Best for fullstack apps with a single Next.js server. |
+| Template     | Path                  | Description                                                                                                       |
+| ------------ | --------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| **next-csr** | `templates/next-csr/` | Client-Side Rendering — React 19 + Zustand 5 + TanStack Query 5 + Axios. Best for SPAs that call an external API. |
+| **next-ssr** | `templates/next-ssr/` | Fullstack SSR — Next.js API routes + Prisma 7 (MariaDB) + Redis + BullMQ + RBAC + Audit Logging.                  |
 
 ---
 
@@ -17,132 +17,373 @@ A monorepo of production-ready **Next.js templates** for frontend and fullstack 
 
 - **Node.js** 20+
 - **npm** 9+ (or pnpm / yarn)
-- For `next-ssr`: MySQL/MariaDB 8+ and Redis 7+
+- For `next-ssr`: Docker (for MariaDB + Redis via docker-compose)
 
 ---
 
-## Getting Started
-
-### Using the Root CLI (Create a new project from a template)
-
-The root `cli/` scaffolds a new project directory from one of the templates:
+## Quick Start — Create a New Project
 
 ```bash
-# From the repo root, install root CLI dependencies
-cd cli
-npm install
-cd ..
+# 1. Install root CLI dependencies
+cd cli && npm install && cd ..
 
-# Run the create command
-npx tsx cli/bin/index.ts create
+# 2. Scaffold a new project (interactive)
+npx tsx cli/bin/index.ts create my-app
+
+# 3. Or pass the template flag directly
+npx tsx cli/bin/index.ts create my-app --template csr
+npx tsx cli/bin/index.ts create my-app --template ssr
 ```
 
-The CLI will ask:
-1. **Template** — choose `next-csr` or `next-ssr`
-2. **Project name** — e.g. `my-app`
-3. **Output directory** — where to copy the template
-
-It then copies the selected template into a new folder and installs dependencies automatically.
+The CLI copies the selected template, updates `package.json`, and prints next steps.
 
 ---
 
-## Template Details
+## Template Setup
 
 ### next-csr — Client-Side Rendering
 
-Best for: teams with a separate backend (Node, Rails, Django, etc.), or migrating from Vite/CRA to Next.js.
-
 ```bash
-cd templates/next-csr
+cd my-app
 npm install
 cp .env.example .env.local
 # Set NEXT_PUBLIC_API_URL=http://your-backend/api
 npm run dev
 ```
 
-**Key features:**
-- Zustand global state (auth, toast)
-- TanStack Query for server state + caching
-- Axios with automatic auth token injection
-- AuthGuard + RoleGuard components
-- Module-based folder structure
-- Built-in CLI code generator
-
-See [templates/next-csr/README.md](templates/next-csr/README.md) for the full guide.
-
----
-
-### next-ssr — Fullstack SSR
-
-Best for: teams that want the database, API, and frontend in a single Next.js codebase.
+### next-ssr — Fullstack SSR (with Docker)
 
 ```bash
-cd templates/next-ssr
+cd my-app
 npm install
 cp .env.example .env
-# Edit .env: set DATABASE_URL, REDIS_URL, JWT_SECRET
 
+# Start infrastructure (MariaDB + Redis)
+docker compose -f docker-compose.dev.yml up -d
+
+# Setup database
 npm run db:generate
-npm run db:migrate
+npm run db:push
 npm run db:seed
+
+# Start dev server
 npm run dev
 ```
 
 Default credentials after seeding: `admin@example.com` / `password123`
 
-**Key features:**
-- Prisma 7 ORM with MySQL/MariaDB
-- JWT auth via `httpOnly` cookies
-- Role-Based Access Control (RBAC) with Permissions
-- Audit logging for all write operations
-- Redis rate limiting
-- BullMQ background job queue
-- Pino structured JSON logging
-- Server Components for zero-JS data fetching
-- Built-in fullstack CLI code generator
+#### Docker Compose Services
 
-See [templates/next-ssr/README.md](templates/next-ssr/README.md) for the full guide.
+| Service | Port | Description           |
+| ------- | ---- | --------------------- |
+| MariaDB | 3306 | Primary database      |
+| Redis   | 6379 | Cache + session store |
 
 ---
 
-## Per-Project CLI Generator
+## Per-Project Code Generator
 
-Each template ships with its own `cli/` that generates code inside that project. After creating a project from a template:
+Each template ships with its own `cli/` for generating modules and CRUD pages.
 
-### next-csr generator
-
-```bash
-cd <your-project>
-
-# Scaffold a feature module (service + hook + types + index)
-npx tsx cli/bin/index.ts generate module
-
-# Scaffold a UI component
-npx tsx cli/bin/index.ts generate component
-
-# Scaffold full CRUD (module + list + form + service + hook)
-npx tsx cli/bin/index.ts generate crud
-```
-
-### next-ssr generator
+### CSR Generator Commands
 
 ```bash
-cd <your-project>
+cd my-app
 
-# Frontend only
-npx tsx cli/bin/index.ts generate frontend:module
-npx tsx cli/bin/index.ts generate frontend:component
-npx tsx cli/bin/index.ts generate frontend:crud
+# Generate a feature module (types + services + hooks + schemas + constants)
+npx tsx cli/bin/index.ts generate module product
 
-# Backend only
-npx tsx cli/bin/index.ts generate backend:module
-npx tsx cli/bin/index.ts generate backend:crud
+# Generate CRUD pages (list + create + detail + edit)
+npx tsx cli/bin/index.ts generate crud product
 
-# Full stack (API route + service + pages in one command)
-npx tsx cli/bin/index.ts generate fullstack:crud
+# Generate a component (module-scoped or global)
+npx tsx cli/bin/index.ts generate component DataTable --dir product
+npx tsx cli/bin/index.ts generate component GlobalSearch
+
+# Audit module quality
+npx tsx cli/bin/index.ts audit
+npx tsx cli/bin/index.ts audit --module product
 ```
 
-All generators are interactive — they prompt for resource names and scaffold files into the correct directories.
+### SSR Generator Commands
+
+```bash
+cd my-app
+
+# Backend module (service + query + schema + dto + mapper + policy + tests)
+npx tsx cli/bin/index.ts generate backend module product
+
+# Backend CRUD (API routes with validation + pagination)
+# If the backend module does not exist yet, the generator bootstraps it automatically first.
+npx tsx cli/bin/index.ts generate backend crud product
+
+# Frontend module (types + services + hooks + schemas)
+npx tsx cli/bin/index.ts generate frontend module product
+
+# Frontend CRUD pages
+npx tsx cli/bin/index.ts generate frontend crud product
+
+# Fullstack CRUD (backend + frontend in one command)
+npx tsx cli/bin/index.ts generate crud product
+
+# Audit all modules
+npx tsx cli/bin/index.ts audit
+```
+
+### What Gets Generated
+
+**CSR module** (`generate module product`):
+
+```
+src/modules/product/
+├── components/
+├── constants/
+│   └── product.permissions.ts
+├── forms/
+├── hooks/
+│   └── useProduct.ts          # React Query CRUD hooks
+├── schemas/
+│   └── product.schema.ts      # Zod validation schemas
+├── services/
+│   └── product.service.ts     # Typed Axios API client
+├── types/
+│   └── product.types.ts       # TypeScript interfaces
+└── index.ts                   # Barrel export with FRAGMENT markers
+```
+
+**SSR backend module** (`generate backend module product`):
+
+```
+src/modules/product/server/
+├── constants/
+│   ├── product.permissions.ts
+│   └── product.events.ts
+├── dto/
+│   └── product-response.dto.ts
+├── mappers/
+│   └── product.mapper.ts       # Model ↔ Response mapping
+├── policies/
+│   └── product.policy.ts       # RBAC access policies
+├── queries/
+│   └── product.query.ts        # Prisma query config + sort validation
+├── schemas/
+│   └── product.schema.ts       # Zod schemas (create + update + filter)
+├── services/
+│   └── product.service.ts      # Business logic with audit + cache
+├── testing/
+│   └── product.prisma.mock.ts  # Prisma delegate mock
+├── tests/
+│   ├── product.service.test.ts
+│   └── product.query.test.ts
+└── index.ts                    # Barrel export
+```
+
+**SSR backend CRUD flow** (`generate backend crud product`):
+
+1. Check whether `src/modules/product/server/` already has the minimum backend scaffold.
+2. If missing, automatically run the equivalent of `generate backend module product` first.
+3. Generate `src/app/api/products/route.ts` and `src/app/api/products/[id]/route.ts`.
+
+This keeps the UX simple for the most common case, while still preserving separation of concerns:
+
+- `generate backend module <name>` for non-CRUD modules or custom backend-only features
+- `generate backend crud <name>` for the common “create module + create REST endpoints” workflow
+
+---
+
+## Architecture Overview
+
+### CSR Structure
+
+```
+src/
+├── app/                        # Next.js pages (routing only)
+│   ├── (auth)/                 # Public routes: /login, /register
+│   └── (dashboard)/            # Protected routes
+├── components/                 # Shared UI components
+│   ├── ui/                     # Button, Input, Spinner
+│   ├── layout/                 # AppShell, Sidebar, Header
+│   ├── feedback/               # ErrorBoundary, Toast, LoadingScreen
+│   └── guards/                 # AuthGuard, RoleGuard
+├── lib/                        # Infrastructure
+│   ├── api/                    # Axios client + interceptors
+│   ├── query/                  # React Query factory
+│   ├── constants/              # Auto-generated modules + permissions
+│   └── env.ts                  # Zod env validation
+├── modules/                    # Feature modules (domain code)
+├── providers/                  # React context providers
+├── store/                      # Zustand global stores
+└── utils/                      # Pure utility functions
+```
+
+### SSR Structure
+
+```
+src/
+├── app/                        # Next.js pages + API routes
+│   ├── (auth)/                 # Public routes
+│   ├── (dashboard)/            # Protected routes
+│   └── api/                    # REST API endpoints
+├── components/                 # Shared UI
+├── lib/                        # Infrastructure
+│   ├── api/                    # Client-side API helpers
+│   ├── constants/              # Permissions, modules, audit actions
+│   └── query/                  # React Query factory
+├── modules/                    # Feature modules
+│   └── <feature>/
+│       ├── types/              # Shared type definitions
+│       ├── schemas/            # Shared Zod schemas
+│       └── server/             # Backend logic
+│           ├── constants/      # Permissions + domain events
+│           ├── dto/            # Data transfer objects
+│           ├── mappers/        # Model ↔ Response mappers
+│           ├── policies/       # RBAC access control
+│           ├── queries/        # Prisma query configuration
+│           ├── schemas/        # Server-side validation
+│           ├── services/       # Business logic
+│           └── tests/          # Unit tests
+├── server/                     # Server infrastructure
+│   ├── auth/                   # JWT + session management
+│   ├── cache/                  # Redis client
+│   ├── db/                     # Prisma client
+│   ├── logger/                 # Pino structured logging
+│   ├── middleware/             # API middleware chain
+│   └── queue/                  # BullMQ job processing
+└── middleware.ts               # Next.js edge middleware
+```
+
+---
+
+## Generator Features
+
+### Fragment-Aware Merge
+
+Generators use `/* FRAGMENT:<name> */` markers in barrel files. When you run a generator on a module that already has files, new exports are **merged** into existing fragments instead of overwriting.
+
+### Constants Auto-Update
+
+Running `generate module` automatically updates:
+
+- `src/lib/constants/modules.constants.ts` — registers the module
+- `src/lib/constants/permissions.constants.ts` (CSR) or `src/lib/constants/permissions.ts` (SSR) — registers CRUD permissions
+
+### 12-Variant Naming
+
+All generators produce correct casing automatically using the `pluralize` library:
+
+| Variable          | Example (input: `blog-post`) |
+| ----------------- | ---------------------------- |
+| `rawName`         | `blog-post`                  |
+| `nameKebab`       | `blog-post`                  |
+| `nameSnake`       | `blog_post`                  |
+| `nameCamel`       | `blogPost`                   |
+| `Name`            | `BlogPost`                   |
+| `namePlural`      | `blogPosts`                  |
+| `namePluralKebab` | `blog-posts`                 |
+| `namePluralSnake` | `blog_posts`                 |
+| `NamePlural`      | `BlogPosts`                  |
+| `NAME`            | `BLOG_POST`                  |
+| `NAME_PLURAL`     | `BLOG_POSTS`                 |
+
+### Audit Mode
+
+```bash
+npx tsx cli/bin/index.ts audit
+```
+
+Analyzes all generated modules for:
+
+- **Structure** — missing directories, barrel exports, CRUD pages
+- **Quality** — `any` types, console.log statements, empty files
+- **Security** — hardcoded credentials, missing policies
+- **Performance** — (SSR) missing caching, query optimization
+
+Outputs an Enterprise Readiness Score (0–100) per module and overall.
+
+### Manual Follow-up After Generation
+
+Some pieces are intentionally **not** auto-generated because they depend on business rules or infrastructure choices.
+
+#### Always review manually
+
+- **Prisma model** — add the model to `prisma/schema.prisma`, then run `npm run db:generate` and your migration flow.
+- **Policy rules** — generated policies start permissive so you can wire ownership, tenant, and workflow restrictions safely.
+- **Query filters** — extend query builders when you need date ranges, status filters, relation filters, or tenant scoping.
+- **Mapper rules** — add relation flattening, computed fields, or response shaping specific to your API contract.
+
+#### Use queue manually when the job is asynchronous
+
+Use `src/server/queue/index.ts` when the action should continue **after** the HTTP response, for example:
+
+- sending email
+- firing webhooks
+- exporting reports
+- resizing images
+- syncing with external providers
+
+Keep synchronous validation, authorization, and database writes in the request/transaction path.
+
+#### Infra guidance lives in code comments too
+
+The SSR template now includes inline comments in key extension-point files so developers get “how to use” and “when to use” guidance directly inside:
+
+- `src/server/queue/index.ts`
+- `src/server/middleware/audit-log.ts`
+- `src/server/middleware/error-handler.ts`
+- `src/server/logger/index.ts`
+- generated backend service/query/policy/mapper files
+
+---
+
+## Tech Stack
+
+| Category     | CSR                      | SSR                             |
+| ------------ | ------------------------ | ------------------------------- |
+| Framework    | Next.js 16 (App Router)  | Next.js 16 (App Router)         |
+| Language     | TypeScript (strict)      | TypeScript (strict)             |
+| Styling      | Tailwind CSS 4           | Tailwind CSS 4                  |
+| State        | Zustand 5                | Zustand 5                       |
+| Server State | TanStack React Query 5   | TanStack React Query 5          |
+| HTTP Client  | Axios                    | Axios (client) + fetch (server) |
+| Forms        | React Hook Form + Zod    | React Hook Form + Zod           |
+| ORM          | —                        | Prisma 7 (MariaDB)              |
+| Auth         | JWT (external API)       | JWT (jose, httpOnly cookies)    |
+| Cache        | —                        | Redis (ioredis)                 |
+| Queue        | —                        | BullMQ                          |
+| Logging      | —                        | Pino (structured JSON)          |
+| Testing      | Vitest + Testing Library | Vitest + Testing Library        |
+| Linting      | ESLint + Prettier        | ESLint + Prettier               |
+
+---
+
+## Scripts Reference
+
+### CSR Scripts
+
+| Script              | Description              |
+| ------------------- | ------------------------ |
+| `npm run dev`       | Start dev server         |
+| `npm run build`     | Production build         |
+| `npm run lint`      | Run ESLint (src + cli)   |
+| `npm run format`    | Prettier format          |
+| `npm run test`      | Vitest (watch mode)      |
+| `npm run test:run`  | Vitest (single run)      |
+| `npm run typecheck` | TypeScript type checking |
+
+### SSR Scripts
+
+| Script                | Description              |
+| --------------------- | ------------------------ |
+| `npm run dev`         | Start dev server         |
+| `npm run build`       | Production build         |
+| `npm run db:generate` | Generate Prisma client   |
+| `npm run db:push`     | Push schema to database  |
+| `npm run db:migrate`  | Run Prisma migrations    |
+| `npm run db:seed`     | Seed database            |
+| `npm run db:studio`   | Open Prisma Studio       |
+| `npm run lint`        | Run ESLint               |
+| `npm run test`        | Vitest (watch mode)      |
+| `npm run typecheck`   | TypeScript type checking |
 
 ---
 
@@ -150,12 +391,19 @@ All generators are interactive — they prompt for resource names and scaffold f
 
 ```
 /
+├── cli/                       # Root CLI — create projects from templates
+│   ├── bin/index.ts           # Entry point (create-next-template)
+│   └── src/commands/create.ts # Template scaffolding logic
 ├── templates/
-│   ├── next-csr/          # CSR template
-│   └── next-ssr/          # SSR + fullstack template
-├── cli/                   # Root CLI (create project from template)
-├── docs/                  # Additional documentation
-└── README.MD              # This file
+│   ├── next-csr/              # CSR template + CLI generator
+│   │   ├── cli/               # CSR code generator
+│   │   └── src/               # Application source
+│   └── next-ssr/              # SSR template + CLI generator
+│       ├── cli/               # SSR code generator
+│       ├── prisma/            # Prisma schema + seed
+│       └── src/               # Application source
+├── docs/                      # Analysis + architecture docs
+└── README.MD                  # This file
 ```
 
 ---
@@ -164,312 +412,7 @@ All generators are interactive — they prompt for resource names and scaffold f
 
 1. Fork the repo
 2. Make changes inside `templates/next-csr/` or `templates/next-ssr/`
-3. Verify the build: `cd templates/<name> && npm run build`
+3. Verify: `npm run typecheck && npm run lint && npm run test:run`
 4. Submit a PR
 
-When adding new template features, update the corresponding `README.md` in the template directory.
-
----
-
-## Quick Start
-
-```bash
-# Clone and enter template
-cd templates/next-csr
-
-# Install dependencies
-npm install
-
-# Set up environment variables
-cp .env.example .env.local
-# Edit .env.local with your API URL
-
-# Start development server
-npm run dev
-```
-
----
-
-## Tech Stack
-
-| Category | Technology |
-|----------|-----------|
-| Framework | Next.js 16 (App Router) |
-| Language | TypeScript (strict mode) |
-| Styling | Tailwind CSS 4 |
-| State Management | Zustand 5 (persisted auth) |
-| Server State | TanStack React Query 5 |
-| HTTP Client | Axios |
-| Forms | React Hook Form + Zod |
-| Testing | Vitest + Testing Library |
-| Linting | ESLint + Prettier |
-| Git Hooks | Husky + lint-staged |
-
----
-
-## Architecture Overview
-
-```
-src/
-├── app/                        # Next.js pages (routing only)
-│   ├── (auth)/                 # Public routes: /login, /register
-│   └── (dashboard)/            # Protected routes: /dashboard, ...
-├── components/                 # Shared UI components
-│   ├── ui/                     # Primitives: Button, Input, Spinner
-│   ├── layout/                 # Shells: AppShell, Sidebar, Header
-│   ├── feedback/               # ErrorBoundary, Toast, LoadingScreen
-│   └── guards/                 # AuthGuard, RoleGuard
-├── hooks/                      # Shared React hooks
-├── lib/                        # Core infrastructure
-│   ├── api/                    # Axios client + interceptors
-│   ├── query/                  # React Query factory
-│   ├── env.ts                  # Zod env validation
-│   └── permissions.ts          # RBAC utilities
-├── modules/                    # Feature modules (domain code)
-│   └── auth/                   # Auth module (example)
-│       ├── components/         # LoginForm, RegisterForm
-│       ├── hooks/              # useLogin, useRegister, useLogout
-│       ├── schemas/            # Zod validation schemas
-│       ├── services/           # API service layer
-│       ├── types/              # TypeScript interfaces
-│       └── index.ts            # Public barrel export
-├── providers/                  # React context providers
-├── store/                      # Global Zustand stores
-├── types/                      # Global TypeScript types
-└── utils/                      # Pure utility functions
-```
-
-### Layer Rules
-
-| Layer | Rule |
-|-------|------|
-| `app/` | Pages only. No business logic. Thin wrappers that compose module components. |
-| `modules/` | Self-contained features. Cross-module imports through barrel `index.ts` only. |
-| `lib/` | Infrastructure code. Feature-agnostic. Rarely changes. |
-| `components/` | Shared UI. No business logic in `ui/`. |
-| `store/` | Cross-cutting global state only. Feature state lives in modules. |
-| `providers/` | Provider composition. Add new providers to `AppProviders.tsx`. |
-
----
-
-## Authentication
-
-### Flow
-
-1. User visits a protected route
-2. `AuthGuard` checks Zustand store for JWT token
-3. No token → redirect to `/login`
-4. User submits `LoginForm` → calls `POST /auth/login`
-5. Token + user stored in Zustand (persisted to localStorage)
-6. Redirect to `/dashboard`
-7. Axios interceptor attaches token to all API requests
-8. `401` response → auto-logout and redirect to `/login`
-
-### Backend Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/auth/login` | Returns `{ user, token }` |
-| POST | `/auth/register` | Creates new account |
-| GET | `/auth/me` | Returns authenticated user |
-
-### RBAC
-
-```tsx
-import { RoleGuard } from '@/components/guards/RoleGuard';
-
-// Show only to admins
-<RoleGuard roles={['admin']}>
-  <AdminPanel />
-</RoleGuard>
-
-// Show only to users with specific permission
-<RoleGuard permissions={['users:delete']} fallback={<p>Access denied</p>}>
-  <DeleteButton />
-</RoleGuard>
-```
-
-Programmatic checks:
-
-```ts
-import { hasRole, hasPermission } from '@/lib/permissions';
-
-if (hasPermission(user, 'users:create')) {
-  // show create button
-}
-```
-
----
-
-## Error Handling
-
-| Layer | Mechanism |
-|-------|-----------|
-| Global UI | `ErrorBoundary` wraps the entire app via `AppProviders` |
-| API errors | Axios response interceptor shows toast + handles 401 |
-| Mutations | React Query `onError` for per-mutation handling |
-| Forms | Zod schemas validate before submission |
-| Environment | Zod validation fails fast on missing env vars |
-
----
-
-## Adding a New Feature
-
-### Option A: Manual
-
-1. Create `src/modules/<feature>/` with folders: `components/`, `hooks/`, `schemas/`, `services/`, `types/`
-2. Create an `index.ts` barrel export
-3. Add route pages in `src/app/(dashboard)/<feature>/`
-4. Add nav item in `src/components/layout/Sidebar.tsx`
-
-### Option B: CLI Generator
-
-```bash
-# Generate a full feature module
-npx frontend-cli generate module product
-
-# Generate a component
-npx frontend-cli generate component DataTable
-
-# Generate full CRUD (module + pages)
-npx frontend-cli generate crud product
-```
-
----
-
-## CLI Generator
-
-Located in `cli/`. Scaffolds code following the architecture conventions.
-
-### Setup
-
-```bash
-cd cli
-npm install
-npm run link-cli
-```
-
-### Commands
-
-| Command | Description |
-|---------|-------------|
-| `frontend-cli create <name>` | New project from template |
-| `frontend-cli generate module <name>` | Feature module scaffold |
-| `frontend-cli generate component <Name>` | Typed React component |
-| `frontend-cli generate crud <name>` | Full CRUD: module + list/create/detail/edit pages |
-| `frontend-cli g <type> <name>` | Shorthand alias |
-
-### Module Generator Output
-
-```
-src/modules/<name>/
-├── components/
-├── hooks/
-│   └── use<Name>.ts         # Query + mutation hooks
-├── schemas/
-│   └── <name>.schema.ts     # Zod schemas + inferred types 
-├── services/
-│   └── <name>.service.ts    # Typed API service
-├── types/
-│   └── <name>.types.ts      # TypeScript interfaces
-└── index.ts                  # Barrel export
-```
-
-### CRUD Generator Output
-
-All of the above, plus:
-
-```
-src/app/(dashboard)/<names>/
-├── page.tsx                  # List page with table
-├── create/page.tsx           # Create form page
-├── [id]/page.tsx             # Detail view page
-└── [id]/edit/page.tsx        # Edit form page
-```
-
----
-
-## Scripts
-
-| Script | Description |
-|--------|-------------|
-| `npm run dev` | Start dev server |
-| `npm run build` | Production build |
-| `npm run start` | Start production server |
-| `npm run lint` | Run ESLint |
-| `npm run lint:fix` | Fix ESLint issues |
-| `npm run format` | Format code with Prettier |
-| `npm run format:check` | Check formatting |
-| `npm run test` | Run tests in watch mode |
-| `npm run test:run` | Run tests once |
-
----
-
-## Environment Variables
-
-Create `.env.local` from the example:
-
-```bash
-cp .env.example .env.local
-```
-
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `NEXT_PUBLIC_API_URL` | Yes | Backend API base URL |
-| `NEXT_PUBLIC_APP_NAME` | No | App display name (default: "App") |
-
-Environment variables are validated at startup using Zod. Missing required variables cause an immediate error with a clear message.
-
----
-
-## Project Conventions
-
-### File Naming
-- Components: `PascalCase.tsx` (e.g., `LoginForm.tsx`)
-- Hooks: `camelCase.ts` prefixed with `use` (e.g., `useAuth.ts`)
-- Services: `kebab-case.service.ts` (e.g., `auth.service.ts`)
-- Schemas: `kebab-case.schema.ts` (e.g., `auth.schema.ts`)
-- Types: `kebab-case.types.ts` (e.g., `auth.types.ts`)
-- Stores: `kebab-case.store.ts` (e.g., `auth.store.ts`)
-
-### Import Order
-1. React / Next.js
-2. Third-party libraries
-3. `@/lib/` infrastructure
-4. `@/components/` shared components
-5. `@/store/` global stores
-6. `@/hooks/` shared hooks
-7. Relative module imports
-
-### TypeScript
-- Strict mode enabled
-- No `any` — use proper types or generics
-- Export types from barrel `index.ts`
-- Use `z.infer<typeof schema>` for form types
-
----
-
-## Architecture Decisions
-
-| Decision | Reasoning |
-|----------|-----------|
-| CSR over SSR | Backend is a separate JWT service. No SSR data fetching needed. |
-| Zustand over Context | Accessible outside React (interceptors). No provider nesting. Built-in persist. |
-| Feature modules | 10 devs can work on different features without conflicts. Clear ownership. |
-| Barrel exports | Clean public APIs. Internal refactoring doesn't break consumers. |
-| Zod for env + forms | Single validation library. Type inference. Fail-fast on misconfiguration. |
-| Axios over fetch | Interceptors for auth. Request/response transformation. Better error typing. |
-| React Query | Caching, dedup, background refetch. Separates server state from client state. |
-
----
-
-## Full Documentation
-
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed architecture documentation including:
-- Complete folder structure explanation
-- Layer responsibilities
-- Authentication flow diagrams
-- RBAC system design
-- Error handling strategy
-- Generator analysis (what to generate and why)
-- CLI generator design and architecture
+When adding new generator templates, update tests and run the audit command to verify quality.

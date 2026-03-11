@@ -1,10 +1,10 @@
-import { type NextRequest, NextResponse } from 'next/server';
-import { requireSession } from '@/server/auth/session';
-import { requirePermission } from '@/server/auth/permissions';
-import { handleApiError } from '@/server/middleware/error-handler';
-import { PERMISSIONS } from '@/lib/constants/permissions';
-import { listRoles, createRole } from '@/modules/role';
-import { createRoleSchema } from '@/modules/role';
+import { type NextRequest, NextResponse } from "next/server";
+import { requireSession } from "@/server/auth/session";
+import { requirePermission } from "@/server/auth/permissions";
+import { handleApiError } from "@/server/middleware/error-handler";
+import { PERMISSIONS } from "@/lib/constants/permissions";
+import { listRoles, createRole } from "@/modules/role";
+import { createRoleSchema } from "@/modules/role";
 
 export async function GET() {
   try {

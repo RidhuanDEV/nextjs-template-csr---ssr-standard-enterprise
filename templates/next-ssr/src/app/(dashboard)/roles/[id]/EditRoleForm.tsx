@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import { useToast } from '@/components/feedback/Toast';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import type { RoleResponse } from '@/modules/role/dto/role-response.dto';
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useToast } from "@/components/feedback/Toast";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import type { RoleResponse } from "@/modules/role/dto/role-response.dto";
 
 interface EditRoleFormProps {
   role: RoleResponse;
@@ -19,13 +19,15 @@ export function EditRoleForm({ role, allPermissions }: EditRoleFormProps) {
   const [selected, setSelected] = useState<string[]>(role.permissions);
 
   function togglePermission(key: string) {
-    setSelected((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
+    setSelected((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
+    );
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (selected.length === 0) {
-      toast.error('Select at least one permission');
+      toast.error("Select at least one permission");
       return;
     }
 
@@ -34,11 +36,11 @@ export function EditRoleForm({ role, allPermissions }: EditRoleFormProps) {
 
     try {
       const res = await fetch(`/api/roles/${role.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: formData.get('name'),
-          description: formData.get('description') || undefined,
+          name: formData.get("name"),
+          description: formData.get("description") || undefined,
           permissions: selected,
         }),
       });
@@ -46,15 +48,15 @@ export function EditRoleForm({ role, allPermissions }: EditRoleFormProps) {
       const data = await res.json();
 
       if (!res.ok) {
-        toast.error(data.message || 'Failed to update role');
+        toast.error(data.message || "Failed to update role");
         return;
       }
 
-      toast.success('Role updated');
-      router.push('/roles');
+      toast.success("Role updated");
+      router.push("/roles");
       router.refresh();
     } catch {
-      toast.error('Something went wrong');
+      toast.error("Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -63,7 +65,11 @@ export function EditRoleForm({ role, allPermissions }: EditRoleFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <Input label="Name" name="name" defaultValue={role.name} required />
-      <Input label="Description" name="description" defaultValue={role.description ?? ''} />
+      <Input
+        label="Description"
+        name="description"
+        defaultValue={role.description ?? ""}
+      />
 
       <div className="space-y-2">
         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">

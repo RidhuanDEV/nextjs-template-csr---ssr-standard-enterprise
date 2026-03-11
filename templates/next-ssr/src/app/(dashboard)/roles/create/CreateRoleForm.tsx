@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import { useToast } from '@/components/feedback/Toast';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useToast } from "@/components/feedback/Toast";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 
 interface CreateRoleFormProps {
   permissions: { key: string; description: string | null }[];
@@ -17,13 +17,15 @@ export function CreateRoleForm({ permissions }: CreateRoleFormProps) {
   const [selected, setSelected] = useState<string[]>([]);
 
   function togglePermission(key: string) {
-    setSelected((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
+    setSelected((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
+    );
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (selected.length === 0) {
-      toast.error('Select at least one permission');
+      toast.error("Select at least one permission");
       return;
     }
 
@@ -31,12 +33,12 @@ export function CreateRoleForm({ permissions }: CreateRoleFormProps) {
     const formData = new FormData(e.currentTarget);
 
     try {
-      const res = await fetch('/api/roles', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/roles", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: formData.get('name'),
-          description: formData.get('description') || undefined,
+          name: formData.get("name"),
+          description: formData.get("description") || undefined,
           permissions: selected,
         }),
       });
@@ -44,15 +46,15 @@ export function CreateRoleForm({ permissions }: CreateRoleFormProps) {
       const data = await res.json();
 
       if (!res.ok) {
-        toast.error(data.message || 'Failed to create role');
+        toast.error(data.message || "Failed to create role");
         return;
       }
 
-      toast.success('Role created');
-      router.push('/roles');
+      toast.success("Role created");
+      router.push("/roles");
       router.refresh();
     } catch {
-      toast.error('Something went wrong');
+      toast.error("Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -61,7 +63,11 @@ export function CreateRoleForm({ permissions }: CreateRoleFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <Input label="Name" name="name" placeholder="manager" required />
-      <Input label="Description" name="description" placeholder="Optional description" />
+      <Input
+        label="Description"
+        name="description"
+        placeholder="Optional description"
+      />
 
       <div className="space-y-2">
         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">

@@ -1,11 +1,17 @@
-'use client';
+"use client";
 
-import { createContext, useCallback, useContext, useState, type ReactNode } from 'react';
-import { cn } from '@/utils/cn';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useState,
+  type ReactNode,
+} from "react";
+import { cn } from "@/utils/cn";
 
 interface Toast {
   id: string;
-  type: 'success' | 'error' | 'info' | 'warning';
+  type: "success" | "error" | "info" | "warning";
   message: string;
 }
 
@@ -20,21 +26,31 @@ const ToastContext = createContext<ToastContextValue | null>(null);
 
 export function useToast() {
   const ctx = useContext(ToastContext);
-  if (!ctx) throw new Error('useToast must be used within ToastProvider');
+  if (!ctx) throw new Error("useToast must be used within ToastProvider");
   return ctx;
 }
 
-function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string) => void }) {
+function ToastItem({
+  toast,
+  onDismiss,
+}: {
+  toast: Toast;
+  onDismiss: (id: string) => void;
+}) {
   return (
     <div
       className={cn(
-        'pointer-events-auto flex w-full max-w-sm items-center rounded-lg p-4 shadow-lg',
+        "pointer-events-auto flex w-full max-w-sm items-center rounded-lg p-4 shadow-lg",
         {
-          'bg-green-50 text-green-800 dark:bg-green-900 dark:text-green-100': toast.type === 'success',
-          'bg-red-50 text-red-800 dark:bg-red-900 dark:text-red-100': toast.type === 'error',
-          'bg-blue-50 text-blue-800 dark:bg-blue-900 dark:text-blue-100': toast.type === 'info',
-          'bg-yellow-50 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100': toast.type === 'warning',
-        }
+          "bg-green-50 text-green-800 dark:bg-green-900 dark:text-green-100":
+            toast.type === "success",
+          "bg-red-50 text-red-800 dark:bg-red-900 dark:text-red-100":
+            toast.type === "error",
+          "bg-blue-50 text-blue-800 dark:bg-blue-900 dark:text-blue-100":
+            toast.type === "info",
+          "bg-yellow-50 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100":
+            toast.type === "warning",
+        },
       )}
     >
       <p className="flex-1 text-sm font-medium">{toast.message}</p>
@@ -51,7 +67,7 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string)
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const addToast = useCallback((type: Toast['type'], message: string) => {
+  const addToast = useCallback((type: Toast["type"], message: string) => {
     const id = crypto.randomUUID();
     setToasts((prev) => [...prev, { id, type, message }]);
     setTimeout(() => {
@@ -64,10 +80,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value: ToastContextValue = {
-    success: (msg) => addToast('success', msg),
-    error: (msg) => addToast('error', msg),
-    info: (msg) => addToast('info', msg),
-    warning: (msg) => addToast('warning', msg),
+    success: (msg) => addToast("success", msg),
+    error: (msg) => addToast("error", msg),
+    info: (msg) => addToast("info", msg),
+    warning: (msg) => addToast("warning", msg),
   };
 
   return (

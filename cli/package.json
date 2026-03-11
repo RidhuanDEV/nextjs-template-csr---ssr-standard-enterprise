@@ -1,10 +1,10 @@
 {
-  "name": "frontend-cli",
-  "version": "1.0.0",
-  "description": "Internal CLI generator for the frontend team",
+  "name": "create-next-template",
+  "version": "2.0.0",
+  "description": "Scaffold a new Next.js project from CSR or SSR enterprise templates",
   "type": "module",
   "bin": {
-    "frontend-cli": "./dist/bin/index.js"
+    "create-next-template": "./dist/bin/index.js"
   },
   "scripts": {
     "build": "tsc",

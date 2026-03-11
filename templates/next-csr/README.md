@@ -6,16 +6,16 @@ A production-ready **Client-Side Rendering** template built with Next.js 16, Rea
 
 ## Tech Stack
 
-| Package | Version | Purpose |
-|---|---|---|
-| Next.js | 16.x | Framework |
-| React | 19.x | UI Library |
-| TypeScript | 5.x | Type Safety |
-| Tailwind CSS | 4.x | Styling |
-| Zustand | Latest | Global State |
-| TanStack Query | Latest | Server State / Data Fetching |
-| Zod | 4.x | Schema Validation |
-| Axios | Latest | HTTP Client |
+| Package        | Version | Purpose                      |
+| -------------- | ------- | ---------------------------- |
+| Next.js        | 16.x    | Framework                    |
+| React          | 19.x    | UI Library                   |
+| TypeScript     | 5.x     | Type Safety                  |
+| Tailwind CSS   | 4.x     | Styling                      |
+| Zustand        | Latest  | Global State                 |
+| TanStack Query | Latest  | Server State / Data Fetching |
+| Zod            | 4.x     | Schema Validation            |
+| Axios          | Latest  | HTTP Client                  |
 
 ---
 
@@ -42,10 +42,10 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## Environment Variables
 
-| Variable | Required | Default | Description |
-|---|---|---|---|
-| `NEXT_PUBLIC_API_URL` | No | `http://localhost:3001/api` | Base URL for your backend API |
-| `NEXT_PUBLIC_APP_NAME` | No | `App` | App display name |
+| Variable               | Required | Default                     | Description                   |
+| ---------------------- | -------- | --------------------------- | ----------------------------- |
+| `NEXT_PUBLIC_API_URL`  | No       | `http://localhost:3001/api` | Base URL for your backend API |
+| `NEXT_PUBLIC_APP_NAME` | No       | `App`                       | App display name              |
 
 These are validated at startup using Zod. If invalid values are provided, the app will throw an error with a clear message.
 

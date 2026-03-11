@@ -1,7 +1,16 @@
-import { Queue, Worker, type Processor, type ConnectionOptions } from 'bullmq';
-import { redis } from '@/server/cache/redis';
+import { Queue, Worker, type Processor, type ConnectionOptions } from "bullmq";
+import { redis } from "@/server/cache/redis";
 
 const connection = redis as unknown as ConnectionOptions;
+
+// How to use:
+// - Call createQueue('queue-name') from services/routes when a task should run asynchronously.
+// - Call createWorker('queue-name', processor) inside a worker entrypoint to process jobs.
+// When to use:
+// - Use queues for slow or retryable side effects such as email, exports, webhooks, media processing,
+//   and third-party syncs.
+// - Do NOT use queues for synchronous request validation or database writes that must finish before the
+//   HTTP response is returned.
 
 export function createQueue(name: string) {
   return new Queue(name, { connection });
