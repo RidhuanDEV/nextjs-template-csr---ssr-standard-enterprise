@@ -28,9 +28,9 @@
     "@hookform/resolvers": "^5.2.2",
     "@prisma/adapter-mariadb": "^7.4.2",
     "@prisma/client": "^7.4.2",
-    "axios": "^1.13.6",
+    "axios": "^1.16.0",
     "bcryptjs": "^3.0.3",
-    "bullmq": "^5.70.4",
+    "bullmq": "^5.78.0",
     "clsx": "^2.1.1",
     "commander": "^14.0.1",
     "dayjs": "^1.11.19",
@@ -39,7 +39,7 @@
     "ioredis": "^5.10.0",
     "jose": "^6.2.1",
     "mariadb": "^3.5.2",
-    "next": "^16.2.3",
+    "next": "^16.2.6",
     "pino": "^10.3.1",
     "pluralize": "^8.0.0",
     "react": "19.2.3",
@@ -63,9 +63,9 @@
     "prettier": "^3.8.1",
     "prisma": "^7.7.0",
     "tailwindcss": "^4",
-    "tsx": "^4.20.6",
+    "tsx": "^4.22.4",
     "typescript": "^5",
     "typescript-eslint": "^8.46.0",
-    "vitest": "^4.0.18"
+    "vitest": "^4.1.8"
   }
 }
